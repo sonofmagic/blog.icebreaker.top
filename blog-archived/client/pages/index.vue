@@ -84,7 +84,7 @@ async function next() {
           </template>
           <button
             v-if="hasMore"
-            class="load-more-btn"
+            class="mt-6 inline-flex items-center rounded-md border border-border-muted px-4 py-2 text-sm font-medium text-fg-default transition hover:bg-border-muted/20 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="btnLoading"
             @click="next"
           >
