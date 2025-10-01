@@ -62,10 +62,10 @@ async function next() {
 </script>
 
 <template>
-  <div class="application-main flex min-h-screen flex-col md:flex-row">
-    <aside class="team-left-column shrink-0">
-      <div class="sticky-column">
-        <div class="hover-scroll-bar sticky-column-inner">
+  <div class="flex min-h-screen flex-col bg-canvas-inset md:flex-row">
+    <aside class="order-2 max-w-full border-b border-r border-border-muted bg-canvas-default md:order-1 md:w-4/12 md:max-w-[350px]">
+      <div class="md:sticky md:top-[62px]">
+        <div class="hover-scroll-bar h-[calc(100vh-62px)] overflow-y-auto px-4 md:px-6 lg:px-8">
           <DarkSouls />
         </div>
       </div>
@@ -94,34 +94,10 @@ async function next() {
             <SidebarFooter />
           </div>
         </div>
-        <div class="team-right-column mt-8 max-w-full md:w-4/12 md:px-6">
+        <div class="mt-8 max-w-full md:w-4/12 md:px-6">
           <CommentArea />
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.application-main {
-  @apply bg-canvas-inset;
-}
-
-.application-main .team-left-column {
-  @apply order-2 max-w-full border-b border-r border-solid border-border-muted bg-canvas-default md:order-1 md:w-4/12;
-}
-
-.application-main .team-left-column .sticky-column {
-  @apply md:sticky md:top-[62px];
-}
-
-.application-main .team-left-column .sticky-column .sticky-column-inner {
-  @apply h-[calc(100vh-62px)] overflow-y-auto px-4 md:px-6 lg:px-8;
-}
-
-@media (min-width: 768px) {
-  .application-main .team-left-column {
-    @apply max-w-[350px];
-  }
-}
-</style>

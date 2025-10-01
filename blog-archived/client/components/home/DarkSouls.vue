@@ -26,7 +26,7 @@ export default {
 </script>
 
 <template>
-  <div class="a-dark-soul space-y-3 py-4">
+  <div class="space-y-3 py-4 text-sm text-fg-default">
     <div class="space-y-2">
       <div class="font-semibold">
         About icebreaker.top
@@ -56,13 +56,16 @@ export default {
       </div>
       <div>
         <div class="mt-2 flex">
-          <div class="npx-command" @click="copyText('npx sonofmagic@latest')">
+          <div
+            class="group relative flex cursor-pointer items-center rounded-md border border-[#cccccc] py-2 pl-3 pr-5 text-white/80 transition hover:border-[#00C642] hover:bg-[rgb(219,255,219)] hover:text-black/80"
+            @click="copyText('npx sonofmagic@latest')"
+          >
             <span>
               <FontAwesomeIcon :icon="['fas', 'chevron-right']" />
             </span>
 
             <pre class="ml-2">npx sonofmagic@latest</pre>
-            <span class="copy-icon">
+            <span class="absolute right-1 opacity-0 transition-opacity group-hover:opacity-100">
               <FontAwesomeIcon :icon="['far', 'copy']" />
             </span>
           </div>
@@ -98,27 +101,3 @@ export default {
 
   </div>
 </template>
-
-<style>
-[data-color-mode='light'] .a-dark-soul .npx-command {
-  @apply text-black/80 !important;
-}
-</style>
-
-<style scoped>
-.a-dark-soul {
-  @apply text-sm text-fg-default;
-}
-
-.a-dark-soul .npx-command {
-  @apply relative flex cursor-pointer items-center rounded-md border border-solid border-[#cccccc] py-2 pl-3 pr-5 text-white/80 hover:border-[#00C642] hover:bg-[rgb(219,255,219)] hover:text-black/80;
-}
-
-.a-dark-soul .npx-command .copy-icon {
-  @apply absolute right-1 opacity-0 transition-opacity;
-}
-
-.a-dark-soul .npx-command:hover .copy-icon {
-  @apply opacity-100;
-}
-</style>

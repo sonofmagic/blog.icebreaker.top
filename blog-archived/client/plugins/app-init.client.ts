@@ -1,8 +1,6 @@
 import mobile from 'is-mobile'
 import svg4everybody from 'svg4everybody'
-import { LocalStorageKey } from '@/enum/user'
 import { useDevice } from '@/composables/useDevice'
-import { useTheme } from '@/composables/useTheme'
 
 const CDN_HOSTS = ['fastly.jsdelivr.net', 'gcore.jsdelivr.net', 'cdn.jsdelivr.net']
 const fallbackOffsets = new WeakMap<EventTarget, number>()
@@ -14,17 +12,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   svg4everybody()
 
-  const { setTheme } = useTheme()
   const { setIsMobile } = useDevice()
-
-  const storedTheme = localStorage.getItem(LocalStorageKey.ThemeMode)
-  if (storedTheme === 'dark' || storedTheme === 'light') {
-    setTheme(storedTheme)
-  }
-  else {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    setTheme(prefersDark ? 'dark' : 'light')
-  }
 
   setIsMobile(mobile())
 

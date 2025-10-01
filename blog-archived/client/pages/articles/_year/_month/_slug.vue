@@ -91,7 +91,11 @@ function scrollTo(id: string) {
             </div>
           </div>
         </div>
-        <ContentRenderer v-if="article" class="compose-nuxt-content" :value="article" />
+        <ContentRenderer
+          v-if="article"
+          class="prose prose-sm prose-invert max-w-none text-fg-default antialiased sm:prose-base"
+          :value="article"
+        />
         <div class="text-xs">
           <div>
             版权声明：本文为博主原创文章，遵循
@@ -114,9 +118,3 @@ function scrollTo(id: string) {
     </div>
   </div>
 </template>
-
-<style>
-.compose-nuxt-content {
-  @apply prose prose-sm prose-invert max-w-none text-fg-default antialiased sm:prose-base;
-}
-</style>

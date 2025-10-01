@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useTheme } from '@/composables/useTheme'
-
-const { isDark } = useTheme()
-
-const theme = computed(() => (isDark.value ? 'dark_dimmed' : 'light'))
+const theme = computed(() => 'dark_dimmed')
 
 onMounted(async () => {
   await import('giscus')

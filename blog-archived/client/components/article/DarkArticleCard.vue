@@ -14,7 +14,7 @@ const publishedAgo = computed(() => (props.item.date ? formatTimespan(props.item
 </script>
 
 <template>
-  <div class="ice-card">
+  <div class="flex border-b border-border-muted py-4">
     <span class="mr-2 flex-shrink-0">
       <OutSideLink
         class="inline-block"
@@ -51,18 +51,18 @@ const publishedAgo = computed(() => (props.item.date ? formatTimespan(props.item
           </span>
         </div>
       </div>
-      <div class="card-body">
+      <div class="mt-2 rounded-md border border-border-default bg-canvas-default">
         <div class="flex flex-col p-4">
-          <NuxtLink class="card-main-title link" :to="item.path">
+          <NuxtLink class="link block text-base font-semibold text-fg-default" :to="item.path">
             {{ item.title }}
           </NuxtLink>
 
           <div v-if="item.description" class="mb-2.5 mt-1 break-all text-fg-muted">
             {{ item.description }}
           </div>
-          <div class="bottom-row">
+          <div class="flex items-baseline justify-between">
             <Tags :tags="item.tags" />
-            <div class="right-part">
+            <div class="flex min-w-[90px] flex-col items-end space-y-1 text-xs text-fg-muted sm:flex-row sm:items-baseline sm:space-x-4 sm:space-y-0">
               <span v-if="item.readingMinutes" class="inline-block">阅读时间 {{ item.readingMinutes }} 分钟</span>
               <span v-if="item.readingWords" class="inline-block">共 {{ item.readingWords }} 个字</span>
             </div>
@@ -72,25 +72,3 @@ const publishedAgo = computed(() => (props.item.date ? formatTimespan(props.item
     </div>
   </div>
 </template>
-
-<style scoped>
-.ice-card {
-  @apply flex border-b border-solid border-border-muted py-4;
-}
-
-.ice-card .card-body {
-  @apply mt-2 rounded-md border border-solid border-border-default bg-canvas-default;
-}
-
-.ice-card .card-body .card-main-title {
-  @apply block text-base font-semibold text-fg-default;
-}
-
-.ice-card .card-body .bottom-row {
-  @apply flex items-baseline justify-between;
-}
-
-.ice-card .card-body .bottom-row .right-part {
-  @apply flex min-w-[90px] flex-col items-end space-y-1 text-xs text-fg-muted sm:flex-row sm:items-baseline sm:space-x-4 sm:space-y-0;
-}
-</style>

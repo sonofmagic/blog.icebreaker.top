@@ -9,7 +9,7 @@ import { createExtendedColors } from './tailwind.extendColors'
 const extendedColors = createExtendedColors()
 
 export default {
-  darkMode: ['selector', '[data-color-mode="dark"]'],
+  darkMode: 'media',
   content: [
     './content/**/*.{md,mdx}',
     './client/app.vue',
@@ -17,6 +17,7 @@ export default {
     './client/layouts/**/*.{vue,ts}',
     './client/pages/**/*.{vue,ts}',
     './client/plugins/**/*.{js,ts}',
+    './client/assets/css/**/*.{css}',
     './nuxt.config.ts',
   ],
   theme: {
