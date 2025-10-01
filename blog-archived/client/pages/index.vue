@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import type { ArticlePageQuery, ArticleSummary } from '@/api/article'
 import { computed, reactive, ref } from 'vue'
+import { getPageList } from '@/api/article'
 import DarkArticleCard from '@/components/article/DarkArticleCard.vue'
 import CommentArea from '@/components/comment/Area.vue'
 import DarkSouls from '@/components/home/DarkSouls.vue'
 import SidebarFooter from '@/components/layout/SidebarFooter.vue'
-import { getPageList, type ArticlePageQuery, type ArticleSummary } from '@/api/article'
 
 const pagination = reactive<ArticlePageQuery>({
   page: 1,

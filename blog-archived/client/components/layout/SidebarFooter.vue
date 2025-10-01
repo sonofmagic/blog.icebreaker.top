@@ -1,13 +1,8 @@
-<script>
-import { version } from '~~/package.json'
+<script setup lang="ts">
+import { version as packageVersion } from '~~/package.json'
 
-export default {
-  name: 'AppFooter',
-  data: () => ({
-    fullYear: new Date().getFullYear(),
-    version,
-  }),
-}
+const fullYear = new Date().getFullYear()
+const version = packageVersion
 </script>
 
 <template>
@@ -52,16 +47,6 @@ export default {
             <FontAwesomeIcon :icon="['fab', 'github']" />
           </OutSideLink>
         </div>
-        <!-- <div>
-          Powered by
-          <OutSideLink href="https://docs.cloudbase.net/">
-            CloudBase
-          </OutSideLink>
-          <span class="mx-1">&</span>
-          <OutSideLink href="https://www.serverless.com/">
-            Serverless
-          </OutSideLink>
-        </div> -->
       </div>
     </div>
   </section>

@@ -2,26 +2,21 @@ import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { config as loadDotenv } from 'dotenv'
 import { defineNuxtConfig } from 'nuxt/config'
 import readingTime from 'reading-time'
 
-loadDotenv()
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const isProd = process.env.NODE_ENV === 'production'
 const isRelease = process.env.SLS_ENV === 'release'
-const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.icebreaker.top'
+const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://blog.icebreaker.top'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 function readStatistic(filename: string) {
   const filePath = path.resolve(__dirname, 'statistics', filename)
-  if (fs.existsSync(filePath)) {
-    return fs.readFileSync(filePath, 'utf-8')
-  }
-  return ''
+  return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : ''
 }
 
-const analyticsScripts = isProd && isRelease
+const analyticsScripts = (isProd && isRelease)
   ? [
       { key: 'hm', children: readStatistic('baidu.js') },
       { key: 'bp', children: readStatistic('baidu-auto-push.js') },
@@ -67,6 +62,11 @@ export default defineNuxtConfig({
     { path: '@/components', pathPrefix: false },
     { path: '@/components/global', global: true, pathPrefix: false },
   ],
+  vue: {
+    compilerOptions: {
+      isCustomElement: tag => tag === 'giscus-widget',
+    },
+  },
   modules: [
     '@pinia/nuxt',
     '@nuxt/content',
@@ -80,7 +80,9 @@ export default defineNuxtConfig({
     },
   },
   sitemap: {
-    siteUrl,
+    site: {
+      url: siteUrl,
+    },
     cacheMaxAge: 60 * 60 * 2,
     defaults: {
       changefreq: 'daily',
@@ -88,18 +90,15 @@ export default defineNuxtConfig({
     },
   },
   content: {
-    build: {
-      markdown: {
-        highlight: {
-          theme: {
-            default: 'github-dark',
-            dark: 'github-dark',
-          },
-          langs: ['ts', 'json'],
-        },
-        toc: {
-          depth: 3,
-        },
+    highlight: {
+      theme: {
+        default: 'github-dark',
+        dark: 'github-dark',
+      },
+    },
+    markdown: {
+      toc: {
+        depth: 3,
       },
     },
   },
@@ -111,7 +110,10 @@ export default defineNuxtConfig({
   },
   hooks: {
     'content:file:afterParse': ({ collection, file, content }) => {
-      if (collection.name !== 'articles' || typeof file.body !== 'string') {
+      if (collection.name !== 'articles') {
+        return
+      }
+      if (typeof file.body !== 'string') {
         return
       }
       const { minutes, words } = readingTime(file.body)
@@ -125,7 +127,7 @@ export default defineNuxtConfig({
   postcss: {
     plugins: {
       '@tailwindcss/postcss': {},
-      autoprefixer: {},
+      'autoprefixer': {},
     },
   },
 })

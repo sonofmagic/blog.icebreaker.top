@@ -1,12 +1,5 @@
-<script>
-import CommonSlot from '@/components/layout/CommonSlot'
-
-export default {
-  name: 'ArticleLayout',
-  components: {
-    CommonSlot,
-  },
-}
+<script setup lang="ts">
+import CommonSlot from '@/components/layout/CommonSlot.vue'
 </script>
 
 <template>
@@ -16,6 +9,5 @@ export default {
         <NuxtPage />
       </div>
     </div>
-
   </CommonSlot>
 </template>

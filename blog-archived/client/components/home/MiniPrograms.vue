@@ -1,65 +1,36 @@
-<script>
-// import 股加加管理端 from '@/assets/img/mini/股加加管理端.jpg'
-// import 股加加员工端 from '@/assets/img/mini/股加加员工端.jpg'
-// import 股权健康体检 from '@/assets/img/mini/股权健康体检.jpg'
-// import 股权激励设计助手 from '@/assets/img/mini/股权激励设计助手.jpg'
+<script setup lang="ts">
 import Icebreaker from '@/assets/img/mini/icebreaker.jpg'
-// import 股加融资计算器 from '@/assets/img/mini/股加融资计算器.jpg'
 import ProgramerCard from '@/assets/img/mini/programer-card.jpg'
 import Tailwindcss from '@/assets/img/mini/tailwindcss.jpg'
 
-export default {
-  name: 'MiniProgramsBar',
-  data() {
-    return {
-      // companyQrcode: [
-      //   {
-      //     alt: '股加加管理端',
-      //     src: 股加加管理端,
-      //   },
-      //   {
-      //     alt: '股加加员工端',
-      //     src: 股加加员工端,
-      //   },
-      //   {
-      //     alt: '股权健康体检',
-      //     src: 股权健康体检,
-      //   },
-      //   {
-      //     alt: '股权激励设计助手',
-      //     src: 股权激励设计助手,
-      //   },
-      //   {
-      //     alt: '股加融资计算器',
-      //     src: 股加融资计算器,
-      //   },
-      // ],
-      selfQrcode: [
-        {
-          desc: '本博客站的小程序版本',
-          alt: '破冰客',
-          src: Icebreaker,
-        },
-        {
-          desc: '一个用于程序员自我展示和相互交流的小程序',
-          alt: '程序员名片',
-          src: ProgramerCard,
-        },
-        {
-          desc: 'tailwindcss参考小程序',
-          alt: 'tailwind',
-          src: Tailwindcss,
-        },
-      ],
-    }
-  },
+interface MiniProgramEntry {
+  desc: string
+  alt: string
+  src: string
 }
+
+const selfQrcode: MiniProgramEntry[] = [
+  {
+    desc: '本博客站的小程序版本',
+    alt: '破冰客',
+    src: Icebreaker,
+  },
+  {
+    desc: '一个用于程序员自我展示和相互交流的小程序',
+    alt: '程序员名片',
+    src: ProgramerCard,
+  },
+  {
+    desc: 'tailwindcss参考小程序',
+    alt: 'tailwind',
+    src: Tailwindcss,
+  },
+]
 </script>
 
 <template>
   <div class="flex flex-col space-y-4">
     <div>
-      <!-- <div class="text-sm">自己写着玩的：</div> -->
       <div
         v-for="item in selfQrcode"
         :key="item.alt"
@@ -74,18 +45,5 @@ export default {
         </div>
       </div>
     </div>
-
-    <!-- <hr />
-    <div>
-      <div class="text-sm">给公司写的(一部分)：</div>
-      <div
-        v-for="item in companyQrcode"
-        :key="item.alt"
-        class="text-center w-40 text-sm my-2"
-      >
-        <img class="w-40" :src="item.src" :alt="item.alt" />
-        <div class="mt-2">{{ item.alt }}</div>
-      </div>
-    </div> -->
   </div>
 </template>

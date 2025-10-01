@@ -1,11 +1,5 @@
-<script>
-import CommonSlot from '@/components/layout/CommonSlot'
-export default {
-  name: 'NoFooterLayout',
-  components: {
-    CommonSlot,
-  },
-}
+<script setup lang="ts">
+import CommonSlot from '@/components/layout/CommonSlot.vue'
 </script>
 
 <template>

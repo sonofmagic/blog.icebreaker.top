@@ -1,32 +1,22 @@
-<script>
-import AppFooter from '@/components/layout/Footer'
-import AppHeader from '@/components/layout/Header'
+<script setup lang="ts">
+import AppFooter from '@/components/layout/Footer.vue'
+import AppHeader from '@/components/layout/Header.vue'
 
-export default {
-  name: 'CommonSlot',
-  components: {
-    AppHeader,
-    AppFooter,
-  },
-  props: {
-    noHeader: {
-      type: [Boolean],
-      default: false,
-    },
-    noFooter: {
-      type: [Boolean],
-      default: false,
-    },
-  },
-}
+const props = withDefaults(defineProps<{
+  noHeader?: boolean
+  noFooter?: boolean
+}>(), {
+  noHeader: false,
+  noFooter: false,
+})
 </script>
 
 <template>
   <section>
-    <AppHeader v-if="!noHeader" />
+    <AppHeader v-if="!props.noHeader" />
 
     <slot />
 
-    <AppFooter v-if="!noFooter" />
+    <AppFooter v-if="!props.noFooter" />
   </section>
 </template>

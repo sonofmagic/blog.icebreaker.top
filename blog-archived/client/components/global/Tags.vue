@@ -1,19 +1,13 @@
-<script>
-export default {
-  name: 'ArticleTags',
-  props: {
-    tags: {
-      type: [Array],
-      default: () => [],
-    },
-  },
-}
+<script setup lang="ts">
+const props = withDefaults(defineProps<{ tags?: string[] }>(), {
+  tags: () => [],
+})
 </script>
 
 <template>
   <div class="flex flex-wrap gap-2">
     <div
-      v-for="tag in tags"
+      v-for="tag in props.tags"
       :key="tag"
       class="inline-block cursor-pointer rounded-3xl border border-transparent bg-accent-subtle/20 px-2 text-xs text-accent-fg hover:bg-accent-emphasis hover:text-fg-on-emphasis"
     >

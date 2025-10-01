@@ -1,14 +1,5 @@
-<script>
-import CommonSlot from '@/components/layout/CommonSlot'
-export default {
-  name: 'PublicLayout',
-  components: {
-    CommonSlot,
-  },
-  methods: {
-
-  },
-}
+<script setup lang="ts">
+import CommonSlot from '@/components/layout/CommonSlot.vue'
 </script>
 
 <template>

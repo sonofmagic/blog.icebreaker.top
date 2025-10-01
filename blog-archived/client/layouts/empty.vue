@@ -1,7 +1,4 @@
-<script>
-export default {
-  name: 'EmptyLayout',
-}
+<script setup lang="ts">
 </script>
 
 <template>

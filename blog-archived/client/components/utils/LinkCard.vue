@@ -1,51 +1,49 @@
-<script>
-export default {
-  name: 'LinkCard',
-  props: {
-    to: {
-      type: [String, Object],
-      default: '',
-    },
-    title: {
-      type: [String],
-      default: '',
-    },
-    desc: {
-      type: [String],
-      default: '',
-    },
-    outSide: {
-      type: [Boolean],
-      default: false,
-    },
-  },
-}
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = withDefaults(defineProps<{
+  to?: string | Record<string, unknown>
+  title?: string
+  desc?: string
+  outSide?: boolean
+}>(), {
+  to: '',
+  title: '',
+  desc: '',
+  outSide: false,
+})
+
+const externalHref = computed(() => (typeof props.to === 'string' ? props.to : ''))
 </script>
 
 <template>
   <OutSideLink
-    v-if="outSide"
+    v-if="props.outSide"
     class="border-border-default rounded-md border"
     raw
-    :href="to"
+    :href="externalHref"
   >
     <div class="p-4 shadow">
       <div class="text-accent-fg mb-3 text-2xl font-thin hover:underline">
-        {{ title }}
+        {{ props.title }}
       </div>
       <div class="text-fg-muted text-sm">
-        {{ desc }}
+        {{ props.desc }}
       </div>
     </div>
   </OutSideLink>
 
-  <NuxtLink v-else :to="to" class="border-border-default rounded-md border">
+  <NuxtLink
+    v-else
+    :to="props.to"
+    class="border-border-default rounded-md border"
+  >
     <div class="p-4 shadow">
       <div class="text-accent-fg mb-3 text-2xl font-thin hover:underline">
-        {{ title }}
+        {{ props.title }}
       </div>
       <div class="text-fg-muted text-sm">
-        {{ desc }}
+        {{ props.desc }}
       </div>
     </div>
   </NuxtLink>

@@ -1,27 +1,16 @@
-<script>
-// import { wechat } from '@/assets/img/cloud'
-import wechatMyQrcode from '@/assets/img/wechat.jpg'
+<script setup lang="ts">
+import { useRouter } from '#imports'
 import copyText from 'copy-text-to-clipboard'
-import MiniPrograms from './MiniPrograms'
+import MiniPrograms from './MiniPrograms.vue'
 
-export default {
-  name: 'MySelf',
-  components: {
-    MiniPrograms,
-  },
-  data() {
-    const refs = {
-      joy: '😂', // nameToEmoji.joy,
-      rofl: '🤣', // nameToEmoji.rofl,
-      smirk: '😏', // nameToEmoji.smirk,
-      icebreakerQrcodeUrl: wechatMyQrcode, // wechat.myQrcode2,
-    }
+const router = useRouter()
 
-    return refs
-  },
-  methods:{
-    copyText
-  }
+const joy = '😂'
+const rofl = '🤣'
+const smirk = '😏'
+
+function goToMiniPrograms() {
+  router.push('/mp')
 }
 </script>
 
@@ -49,10 +38,7 @@ export default {
     <div class="space-y-2">
       <div class="font-semibold">
         About
-        <span
-        >
-          icebreaker
-        </span>
+        <span> icebreaker </span>
       </div>
       <div>
         <div class="mt-2 flex">
@@ -89,7 +75,7 @@ export default {
       <div class="flex font-semibold">
         <div
           class="cursor-pointer hover:underline"
-          @click="$router.push('/mp')"
+          @click="goToMiniPrograms"
         >
           My Mini Programs (Click Here)
         </div>
@@ -98,6 +84,5 @@ export default {
         <MiniPrograms />
       </div>
     </div>
-
   </div>
 </template>
