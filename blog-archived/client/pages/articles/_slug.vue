@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { ParsedContent } from '@nuxt/content/dist/runtime/types'
-import { createError, queryContent, useRoute, useSeoMeta } from '#imports'
 import { computed } from 'vue'
+import { createError, queryCollection, queryCollectionItemSurroundings, useRoute, useSeoMeta } from '#imports'
 
 const route = useRoute()
 const slug = route.params.slug as string
+const contentPath = `/articles/${slug}`
 
 const { data: article } = await useAsyncData(`article-${slug}`, async () => {
-  const entry = await queryContent<ParsedContent>(`/articles/${slug}`).findOne()
+  const entry = await queryCollection('articles').path(contentPath).first()
   if (!entry) {
     throw createError({ statusCode: 404, message: 'Article not found' })
   }
@@ -15,29 +15,29 @@ const { data: article } = await useAsyncData(`article-${slug}`, async () => {
 })
 
 const { data: authors } = await useAsyncData(`article-authors-${slug}`, async () => {
-  if (!article.value?.authors || !Array.isArray(article.value.authors)) {
+  const authorSlugs = article.value?.authors
+  if (!Array.isArray(authorSlugs) || authorSlugs.length === 0) {
     return []
   }
-  return queryContent('/authors')
-    .where({ slug: { $in: article.value.authors } })
-    .select(['slug', 'name', 'avatarUrl'])
-    .find()
+  return queryCollection('authors')
+    .andWhere(group => group.where('slug', 'IN', authorSlugs))
+    .select('slug', 'name', 'avatarUrl')
+    .all()
 })
 
 const { data: surround } = await useAsyncData(`article-surround-${slug}`, async () => {
-  if (!article.value?._path) {
+  if (!article.value?.path) {
     return { prev: null, next: null }
   }
-  const [prev, next] = await queryContent('/articles')
-    .select(['title', '_path'])
-    .sort({ date: -1 })
-    .findSurround(article.value._path)
-  return { prev, next }
+  const [prev, next] = await queryCollectionItemSurroundings('articles', article.value.path, {
+    fields: ['title', 'path'],
+  })
+  return { prev: prev ?? null, next: next ?? null }
 })
 
 useSeoMeta(() => ({
-  title: article.value?.title,
-  description: article.value?.description,
+  title: typeof article.value?.title === 'string' ? article.value.title : undefined,
+  description: typeof article.value?.description === 'string' ? article.value.description : undefined,
 }))
 
 const prevArticle = computed(() => surround.value?.prev || null)
@@ -56,11 +56,11 @@ const nextArticle = computed(() => surround.value?.next || null)
     </div>
     <ContentRenderer v-if="article" :value="article" />
     <div class="mt-6 flex items-center justify-between text-sm">
-      <NuxtLink v-if="prevArticle" :to="prevArticle._path">
+      <NuxtLink v-if="prevArticle" :to="prevArticle.path">
         &lt; {{ prevArticle.title }}
       </NuxtLink>
       <span v-else />
-      <NuxtLink v-if="nextArticle" :to="nextArticle._path">
+      <NuxtLink v-if="nextArticle" :to="nextArticle.path">
         {{ nextArticle.title }} &gt;
       </NuxtLink>
     </div>

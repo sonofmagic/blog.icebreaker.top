@@ -88,10 +88,18 @@ export default defineNuxtConfig({
     },
   },
   content: {
-    sources: {
-      content: {
-        driver: 'fs',
-        base: path.resolve(__dirname, 'content'),
+    build: {
+      markdown: {
+        highlight: {
+          theme: {
+            default: 'github-dark',
+            dark: 'github-dark',
+          },
+          langs: ['ts', 'json'],
+        },
+        toc: {
+          depth: 3,
+        },
       },
     },
   },
@@ -102,13 +110,13 @@ export default defineNuxtConfig({
     },
   },
   hooks: {
-    'content:file:afterParse': (document) => {
-      if (document.extension === '.md') {
-        const source = typeof document.text === 'string' ? document.text : ''
-        const { minutes, words } = readingTime(source)
-        document.readingMinutes = Math.round(minutes)
-        document.readingWords = words
+    'content:file:afterParse': ({ collection, file, content }) => {
+      if (collection.name !== 'articles' || typeof file.body !== 'string') {
+        return
       }
+      const { minutes, words } = readingTime(file.body)
+      content.readingMinutes = Math.round(minutes)
+      content.readingWords = words
     },
   },
   imports: {

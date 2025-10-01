@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ArticleSummary } from '@/api/article'
-import { queryContent, useRoute } from '#imports'
+import { mapToArticleSummary, createArticlesQuery } from '@/api/article'
+import { useRoute } from '#imports'
 import { computed } from 'vue'
 
 const route = useRoute()
@@ -8,19 +8,14 @@ const year = computed(() => route.params.year as string)
 const month = computed(() => route.params.month as string)
 
 const { data: articles } = await useAsyncData(`articles-${year.value}-${month.value}`, async () => {
-  const list = await queryContent(`/articles/${year.value}/${month.value}`)
-    .sort({ date: -1 })
-    .select(['_id', '_path', 'title', 'description', 'date', 'tags'])
-    .find()
+  const prefix = `/articles/${year.value}/${month.value}`
+  const list = await createArticlesQuery()
+    .andWhere(group => group.where('path', 'LIKE', `${prefix}/%`))
+    .select('id', 'path', 'title', 'description', 'date', 'tags')
+    .order('date', 'DESC')
+    .all()
 
-  return list.map<ArticleSummary>((article: any) => ({
-    id: article._id || article._path || '',
-    path: article._path || '/',
-    title: article.title || 'Untitled',
-    description: article.description,
-    date: article.date,
-    tags: article.tags || [],
-  }))
+  return list.map(mapToArticleSummary)
 })
 
 const articleList = computed(() => articles.value ?? [])

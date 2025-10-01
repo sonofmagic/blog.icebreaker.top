@@ -3,19 +3,4 @@ packages:
   - 'packages/*'
   - blog-archived
 
-hoistPattern:
-  - '!tailwindcss'
-  - '!@iconify/tailwind'
-
-publicHoistPattern:
-  - '!tailwindcss'
-
-hoist: false
-
-nodeLinker: hoisted
-
-catalogs:
-  tailwindcss3:
-    tailwindcss: ^3.4.17
-  tailwindcss4:
-    tailwindcss: ^4
+shamefullyHoist: true

@@ -1,12 +1,11 @@
-// require('dotenv').config()
-const fsp = require('node:fs').promises
-const path = require('node:path')
+import fsp from 'node:fs/promises'
+import path from 'node:path'
 
 const privateRepositoryPath = path.resolve(
-  __dirname,
+  import.meta.dirname,
   '../../article/content',
 )
-const currentDir = path.resolve(__dirname, '..', 'content')
+const currentDir = path.resolve(import.meta.dirname, '..', 'content')
   ; (async () => {
   await fsp.symlink(privateRepositoryPath, currentDir, 'dir')
 })()

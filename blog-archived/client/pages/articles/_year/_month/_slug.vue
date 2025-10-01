@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { createError, queryContent, useRoute, useRuntimeConfig, useSeoMeta } from '#imports'
+import { createError, queryCollection, useRoute, useRuntimeConfig, useSeoMeta } from '#imports'
 import CommentArea from '@/components/comment/Area.vue'
 import Tags from '@/components/global/Tags.vue'
 
@@ -15,7 +15,7 @@ const slug = route.params.slug as string
 const path = `/articles/${year}/${month}/${slug}`
 
 const { data: article } = await useAsyncData(`article-${path}`, async () => {
-  const entry = await queryContent(path).findOne()
+  const entry = await queryCollection('articles').path(path).first()
   if (!entry) {
     throw createError({ statusCode: 404, message: 'Article not found' })
   }
@@ -24,11 +24,11 @@ const { data: article } = await useAsyncData(`article-${path}`, async () => {
 
 useSeoMeta(() => ({
   title: article.value?.title ? `${article.value.title}_icebreaker` : 'icebreaker',
-  description: article.value?.description,
+  description: typeof article.value?.description === 'string' ? article.value.description : undefined,
 }))
 
 const toc = computed(() => article.value?.body?.toc?.links ?? article.value?.toc ?? [])
-const tags = computed(() => article.value?.tags ?? [])
+const tags = computed(() => (Array.isArray(article.value?.tags) ? article.value?.tags : []))
 const runtimeConfig = useRuntimeConfig()
 const href = computed(() => `${runtimeConfig.public.siteUrl || 'https://icebreaker.top'}${route.fullPath}`)
 

@@ -1,14 +1,17 @@
-import { queryContent } from '#imports'
+import { queryCollection } from '#imports'
 
-interface ArticleListItem {
+export interface ArticleRecord {
+  id?: string
   _id?: string
+  path?: string
   _path?: string
-  title?: string
-  description?: string
-  date?: string
-  tags?: string[]
-  readingMinutes?: number
-  readingWords?: number
+  title?: unknown
+  description?: unknown
+  date?: unknown
+  tags?: unknown
+  readingMinutes?: unknown
+  readingWords?: unknown
+  draft?: unknown
 }
 
 export interface ArticlePageQuery {
@@ -27,50 +30,112 @@ export interface ArticleSummary {
   readingWords?: number
 }
 
-export async function getPageList(query: ArticlePageQuery) {
-  const { page, perPage } = query
-  const items = await queryContent<ArticleListItem>('articles')
-    .where({ draft: { $ne: true } })
-    .sort({ date: -1 })
-    .select(['_id', '_path', 'title', 'description', 'date', 'tags', 'readingMinutes', 'readingWords'])
-    .find()
+export function createArticlesQuery() {
+  return queryCollection('articles').andWhere(group =>
+    group
+      .where('draft', 'IS NULL')
+      .orWhere(orGroup => orGroup.where('draft', '<>', true)),
+  )
+}
 
-  const total = items.length
-  const start = Math.max(0, (page - 1) * perPage)
-  const end = start + perPage
-  const articles = items.slice(start, end)
+export async function getPageList({ page, perPage }: ArticlePageQuery) {
+  const safePage = Math.max(1, page)
+  const safePerPage = Math.max(1, perPage)
+  const offset = (safePage - 1) * safePerPage
 
-  const mapped: ArticleSummary[] = articles.map(article => ({
-    id: article._id || article._path || '',
-    path: article._path || '/',
-    title: article.title ?? 'Untitled',
-    description: article.description,
-    date: article.date,
-    tags: article.tags ?? [],
-    readingMinutes: article.readingMinutes,
-    readingWords: article.readingWords,
-  }))
+  const [total, items] = await Promise.all([
+    createArticlesQuery().count('id'),
+    createArticlesQuery()
+      .select('id', 'path', 'title', 'description', 'date', 'tags', 'readingMinutes', 'readingWords')
+      .order('date', 'DESC')
+      .skip(offset)
+      .limit(safePerPage)
+      .all(),
+  ])
 
   return {
     total,
-    articles: mapped,
+    articles: items.map(mapToArticleSummary),
   }
 }
 
 export async function searchArticles(keyword: string) {
-  const matches = await queryContent<ArticleListItem>('articles')
-    .where({ draft: { $ne: true } })
-    .search(keyword)
-    .sort({ date: -1 })
-    .select(['_id', '_path', 'title', 'description', 'date', 'tags'])
-    .find()
+  const normalized = keyword.trim()
+  if (!normalized) {
+    return []
+  }
 
-  return matches.map<ArticleSummary>(article => ({
-    id: article._id || article._path || '',
-    path: article._path || '/',
-    title: article.title ?? 'Untitled',
-    description: article.description,
-    date: article.date,
-    tags: article.tags ?? [],
-  }))
+  const likeTerm = `%${normalized.replace(/[%_]/g, '')}%`
+  const matches = await createArticlesQuery()
+    .andWhere(group =>
+      group
+        .where('title', 'LIKE', likeTerm)
+        .orWhere(orGroup => orGroup.where('description', 'LIKE', likeTerm)),
+    )
+    .order('date', 'DESC')
+    .select('id', 'path', 'title', 'description', 'date', 'tags')
+    .limit(50)
+    .all()
+
+  return matches.map(mapToArticleSummary)
+}
+
+export function mapToArticleSummary(article: ArticleRecord): ArticleSummary {
+  return {
+    id: resolveId(article),
+    path: resolvePath(article),
+    title: asOptionalString(article.title) ?? 'Untitled',
+    description: asOptionalString(article.description),
+    date: asOptionalString(article.date),
+    tags: normalizeTags(article.tags),
+    readingMinutes: asOptionalNumber(article.readingMinutes),
+    readingWords: asOptionalNumber(article.readingWords),
+  }
+}
+
+function resolveId(article: ArticleRecord) {
+  return (
+    (typeof article.id === 'string' && article.id) ||
+    (typeof article._id === 'string' && article._id) ||
+    resolvePath(article)
+  )
+}
+
+function resolvePath(article: ArticleRecord) {
+  const candidate =
+    (typeof article.path === 'string' && article.path) ||
+    (typeof article._path === 'string' && article._path)
+  return candidate || '/'
+}
+
+function asOptionalString(value: unknown) {
+  return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+function asOptionalNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  if (typeof value === 'string' && value.length > 0) {
+    const parsed = Number.parseFloat(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
+function normalizeTags(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+  }
+  if (typeof value === 'string' && value.length > 0) {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) {
+        return parsed.filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+      }
+    } catch {
+      return []
+    }
+  }
+  return []
 }
