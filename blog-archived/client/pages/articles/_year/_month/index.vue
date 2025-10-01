@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { queryContent, useRoute } from '#imports'
 import type { ArticleSummary } from '@/api/article'
+import { queryContent, useRoute } from '#imports'
+import { computed } from 'vue'
 
 const route = useRoute()
 const year = computed(() => route.params.year as string)
@@ -10,6 +10,7 @@ const month = computed(() => route.params.month as string)
 const { data: articles } = await useAsyncData(`articles-${year.value}-${month.value}`, async () => {
   const list = await queryContent(`/articles/${year.value}/${month.value}`)
     .sort({ date: -1 })
+    .select(['_id', '_path', 'title', 'description', 'date', 'tags'])
     .find()
 
   return list.map<ArticleSummary>((article: any) => ({

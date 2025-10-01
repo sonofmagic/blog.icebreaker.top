@@ -1,9 +1,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { config as loadDotenv } from 'dotenv'
-import readingTime from 'reading-time'
 import { defineNuxtConfig } from 'nuxt/config'
+import readingTime from 'reading-time'
 
 loadDotenv()
 
@@ -46,7 +47,7 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { 'http-equiv': 'X-UA-Compatible', content: 'IE=edge, chrome=1' },
+        { 'http-equiv': 'X-UA-Compatible', 'content': 'IE=edge, chrome=1' },
         { name: 'description', content: '' },
       ],
       link: [
@@ -93,13 +94,6 @@ export default defineNuxtConfig({
     exposeConfig: false,
   },
   content: {
-    markdown: {
-      highlight: {
-        theme: 'github-dark',
-      },
-      remarkPlugins: [],
-      rehypePlugins: [],
-    },
     sources: {
       content: {
         driver: 'fs',
@@ -114,13 +108,9 @@ export default defineNuxtConfig({
     },
   },
   hooks: {
-    'content:file:beforeParse': (document) => {
+    'content:file:afterParse': (document) => {
       if (document.extension === '.md') {
-        const source = typeof document.text === 'string'
-          ? document.text
-          : typeof document.body === 'string'
-            ? document.body
-            : ''
+        const source = typeof document.text === 'string' ? document.text : ''
         const { minutes, words } = readingTime(source)
         document.readingMinutes = Math.round(minutes)
         document.readingWords = words

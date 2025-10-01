@@ -1,17 +1,17 @@
+import type { H3Event } from 'h3'
+import { serverQueryContent } from '#content/server'
+import { useRuntimeConfig } from '#imports'
 import { Feed } from 'feed'
 import { joinURL } from 'ufo'
-import type { H3Event } from 'h3'
-import { useRuntimeConfig } from '#imports'
-import { serverQueryContent } from '#content/server'
 
-type Article = {
+interface Article {
   _path?: string
   _id?: string
   title?: string
   description?: string
   summary?: string
   date?: string
-  authors?: Array<{ name?: string; email?: string }>
+  authors?: Array<{ name?: string, email?: string }>
   tags?: string[]
 }
 
@@ -45,13 +45,15 @@ export async function createSiteFeed(event: H3Event) {
     const path = article._path || '/'
     const link = joinURL(siteUrl, path)
 
+    const content = article.summary ?? (article as any).excerpt
+
     feed.addItem({
       title: article.title || link,
       id: article._id || link,
       link,
       date: article.date ? new Date(article.date) : new Date(),
       description: article.description,
-      content: article.summary,
+      content,
       category: Array.isArray(article.tags)
         ? article.tags.map(tag => ({ term: tag }))
         : undefined,

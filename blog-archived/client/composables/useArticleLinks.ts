@@ -5,11 +5,11 @@ export function useArticleLinks() {
   return useAsyncData('article-links', async () => {
     const entries = await queryContent<ParsedContent>('articles')
       .where({ draft: { $ne: true } })
-      .only(['_id', '_path', 'title', 'description', 'tags', 'date'])
+      .select(['_id', '_path', 'title', 'description', 'tags', 'date'])
       .sort({ date: -1 })
       .find()
 
-    return entries.map((entry) => ({
+    return entries.map(entry => ({
       id: entry._id ?? entry._path ?? '',
       path: entry._path ?? '/',
       title: entry.title ?? 'Untitled',

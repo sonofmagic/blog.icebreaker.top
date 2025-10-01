@@ -1,6 +1,6 @@
 import { queryContent } from '#imports'
 
-type ArticleListItem = {
+interface ArticleListItem {
   _id?: string
   _path?: string
   title?: string
@@ -32,7 +32,7 @@ export async function getPageList(query: ArticlePageQuery) {
   const items = await queryContent<ArticleListItem>('articles')
     .where({ draft: { $ne: true } })
     .sort({ date: -1 })
-    .only(['_id', '_path', 'title', 'description', 'date', 'tags', 'readingMinutes', 'readingWords'])
+    .select(['_id', '_path', 'title', 'description', 'date', 'tags', 'readingMinutes', 'readingWords'])
     .find()
 
   const total = items.length
@@ -40,7 +40,7 @@ export async function getPageList(query: ArticlePageQuery) {
   const end = start + perPage
   const articles = items.slice(start, end)
 
-  const mapped: ArticleSummary[] = articles.map((article) => ({
+  const mapped: ArticleSummary[] = articles.map(article => ({
     id: article._id || article._path || '',
     path: article._path || '/',
     title: article.title ?? 'Untitled',
@@ -62,10 +62,10 @@ export async function searchArticles(keyword: string) {
     .where({ draft: { $ne: true } })
     .search(keyword)
     .sort({ date: -1 })
-    .only(['_id', '_path', 'title', 'description', 'date', 'tags'])
+    .select(['_id', '_path', 'title', 'description', 'date', 'tags'])
     .find()
 
-  return matches.map<ArticleSummary>((article) => ({
+  return matches.map<ArticleSummary>(article => ({
     id: article._id || article._path || '',
     path: article._path || '/',
     title: article.title ?? 'Untitled',

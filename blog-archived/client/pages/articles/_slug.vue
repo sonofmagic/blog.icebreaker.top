@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { createError, queryContent, useRoute, useSeoMeta } from '#imports'
 import type { ParsedContent } from '@nuxt/content/dist/runtime/types'
+import { createError, queryContent, useRoute, useSeoMeta } from '#imports'
+import { computed } from 'vue'
 
 const route = useRoute()
 const slug = route.params.slug as string
@@ -20,6 +20,7 @@ const { data: authors } = await useAsyncData(`article-authors-${slug}`, async ()
   }
   return queryContent('/authors')
     .where({ slug: { $in: article.value.authors } })
+    .select(['slug', 'name', 'avatarUrl'])
     .find()
 })
 
@@ -28,7 +29,7 @@ const { data: surround } = await useAsyncData(`article-surround-${slug}`, async 
     return { prev: null, next: null }
   }
   const [prev, next] = await queryContent('/articles')
-    .only(['title', '_path'])
+    .select(['title', '_path'])
     .sort({ date: -1 })
     .findSurround(article.value._path)
   return { prev, next }
