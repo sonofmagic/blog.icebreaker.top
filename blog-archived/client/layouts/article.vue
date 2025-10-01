@@ -13,7 +13,7 @@ export default {
   <CommonSlot>
     <div>
       <div class="container mx-auto">
-        <Nuxt />
+        <NuxtPage />
       </div>
     </div>
 

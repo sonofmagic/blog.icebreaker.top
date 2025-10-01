@@ -1,29 +1,22 @@
-<script>
-import { mapState } from 'vuex'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useArticleLinks } from '@/composables/useArticleLinks'
 
-export default {
-  name: 'SitemapList',
-  props: {
-    hidden: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  computed: {
-    ...mapState(['hrefs']),
-  },
-}
+const props = withDefaults(defineProps<{ hidden?: boolean }>(), {
+  hidden: true,
+})
+
+const { data } = await useArticleLinks()
+const links = computed(() => data.value ?? [])
 </script>
 
 <template>
-  <div :class="hidden ? 'hidden' : ''">
-    <slot :data="hrefs">
+  <div :class="props.hidden ? 'hidden' : ''">
+    <slot :data="links">
       <div class="flex flex-col">
-        <nuxt-link v-for="item in hrefs" :key="item.id" :to="item.path">
-          {{
-            item.title
-          }}
-        </nuxt-link>
+        <NuxtLink v-for="item in links" :key="item.id" :to="item.path">
+          {{ item.title }}
+        </NuxtLink>
       </div>
     </slot>
   </div>

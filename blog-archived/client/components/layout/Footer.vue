@@ -31,9 +31,9 @@ export default {
       </div>
       <div>version:{{ version }}</div>
       <div>
-        <nuxt-link class="mr-5" to="/sitemap">
+        <NuxtLink class="mr-5" to="/sitemap">
           站点地图
-        </nuxt-link>
+        </NuxtLink>
         <OutSideLink
           class="mr-5 text-base hover:text-gray-700"
           raw

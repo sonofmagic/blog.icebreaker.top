@@ -1,64 +1,67 @@
-<script>
-export default {
-  async asyncData({ $content, params, error }) {
-    let article
+<script setup lang="ts">
+import { computed } from 'vue'
+import { createError, queryContent, useRoute, useSeoMeta } from '#imports'
+import type { ParsedContent } from '@nuxt/content/dist/runtime/types'
 
-    try {
-      article = await $content('articles', params.slug).fetch()
-      // OR const article = await $content(`articles/${params.slug}`).fetch()
-    }
-    catch (e) {
-      return error({ message: 'Article not found' })
-    }
+const route = useRoute()
+const slug = route.params.slug as string
 
-    const authors = await $content('authors')
-      .where({ slug: { $in: article.authors } })
-      .fetch()
+const { data: article } = await useAsyncData(`article-${slug}`, async () => {
+  const entry = await queryContent<ParsedContent>(`/articles/${slug}`).findOne()
+  if (!entry) {
+    throw createError({ statusCode: 404, message: 'Article not found' })
+  }
+  return entry
+})
 
-    const [prev, next] = await $content('articles')
-      .only(['title', 'slug'])
-      .sortBy('date', 'desc')
-      .surround(params.slug)
-      .fetch()
+const { data: authors } = await useAsyncData(`article-authors-${slug}`, async () => {
+  if (!article.value?.authors || !Array.isArray(article.value.authors)) {
+    return []
+  }
+  return queryContent('/authors')
+    .where({ slug: { $in: article.value.authors } })
+    .find()
+})
 
-    return {
-      article,
-      authors,
-      prev,
-      next,
-    }
-  },
-  head() {
-    return {
-      title: this.article.title,
-      description: this.article.description,
-    }
-  },
-}
+const { data: surround } = await useAsyncData(`article-surround-${slug}`, async () => {
+  if (!article.value?._path) {
+    return { prev: null, next: null }
+  }
+  const [prev, next] = await queryContent('/articles')
+    .only(['title', '_path'])
+    .sort({ date: -1 })
+    .findSurround(article.value._path)
+  return { prev, next }
+})
+
+useSeoMeta(() => ({
+  title: article.value?.title,
+  description: article.value?.description,
+}))
+
+const prevArticle = computed(() => surround.value?.prev || null)
+const nextArticle = computed(() => surround.value?.next || null)
 </script>
 
 <template>
   <div class="container mx-auto">
-    <nuxt-link to="/articles">
+    <NuxtLink to="/articles">
       Articles
-    </nuxt-link>
-    <h2>{{ article.title }}</h2>
-    <div v-for="author of authors" :key="author.slug">
-      <img :src="author.avatarUrl" width="50" height="50">
-      {{ author.name }}
+    </NuxtLink>
+    <h2>{{ article?.title }}</h2>
+    <div v-for="author of authors" :key="author.slug" class="flex items-center space-x-2">
+      <img :src="author.avatarUrl" width="50" height="50" alt="author avatar">
+      <span>{{ author.name }}</span>
     </div>
-    <nuxt-content :document="article" />
-    <nuxt-link
-      v-if="prev"
-      :to="{ name: 'articles-slug', params: { slug: prev.slug } }"
-    >
-      &lt; {{ prev.title }}
-    </nuxt-link>&nbsp;|
-    <nuxt-link
-      v-if="next"
-      :to="{ name: 'articles-slug', params: { slug: next.slug } }"
-    >
-      {{ next.title }} &gt;
-    </nuxt-link>
+    <ContentRenderer v-if="article" :value="article" />
+    <div class="mt-6 flex items-center justify-between text-sm">
+      <NuxtLink v-if="prevArticle" :to="prevArticle._path">
+        &lt; {{ prevArticle.title }}
+      </NuxtLink>
+      <span v-else />
+      <NuxtLink v-if="nextArticle" :to="nextArticle._path">
+        {{ nextArticle.title }} &gt;
+      </NuxtLink>
+    </div>
   </div>
 </template>

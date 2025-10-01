@@ -1,23 +1,14 @@
-<script>
-export default {
-  data() {
-    return {
-      mounted: false,
-    }
-  },
-  computed: {
-    mode() {
-      return this.$store.state.theme
-    },
-    theme({ mode }) {
-      return mode === 'light' ? 'light' : 'dark_dimmed'
-    },
-  },
-  mounted() {
-    this.mounted = true
-    import('giscus')
-  },
-}
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
+
+const theme = computed(() => (isDark.value ? 'dark_dimmed' : 'light'))
+
+onMounted(async () => {
+  await import('giscus')
+})
 </script>
 
 <template>
@@ -39,5 +30,3 @@ export default {
     />
   </div>
 </template>
-
-<style lang="scss" scoped></style>

@@ -2,10 +2,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    }
+      "~/*": ["./client/*"],
+      "@/*": ["./client/*"]
+    },
+    "types": [
+      "@pinia/nuxt"
+    ]
   },
   "include": [
     "client"

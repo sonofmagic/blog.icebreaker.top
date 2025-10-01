@@ -11,7 +11,7 @@ export default {
 <template>
   <CommonSlot no-footer>
     <div>
-      <Nuxt />
+      <NuxtPage />
     </div>
   </CommonSlot>
 </template>

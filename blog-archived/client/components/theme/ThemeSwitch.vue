@@ -1,61 +1,45 @@
-<script>
-export default {
-  name: 'ThemeSwitch',
-  data() {
-    const refs = {
-      darkMode: false,
-    }
-    if (process.client) {
-      if (!localStorage.theme && !localStorage.seted_theme) {
-        localStorage.theme = 'light'
-        localStorage.seted_theme = 1
-      }
-      refs.darkMode = localStorage.getItem('theme') === 'dark'
-    }
-    return refs
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark, setTheme } = useTheme()
+
+const darkMode = computed({
+  get: () => isDark.value,
+  set: (value: boolean) => {
+    setTheme(value ? 'dark' : 'light')
   },
-  computed: {
-    theme: {
-      get() {
-        return this.darkMode
-      },
-      set(nv) {
-        if (process.client) {
-          localStorage.setItem('theme', nv ? 'dark' : 'light')
-        }
-        this.darkMode = nv
-      },
-    },
-  },
-  watch: {
-    // very lazy
-    darkMode() {
-      this.checkMode()
-    },
-  },
-  mounted() {
-    this.checkMode()
-  },
-  methods: {
-    checkMode() {
-      if (
-        localStorage.theme === 'dark'
-        || (!('theme' in localStorage)
-          && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ) {
-        document.documentElement.classList.add('dark')
-      }
-      else {
-        document.documentElement.classList.remove('dark')
-      }
-    },
-  },
+})
+
+function toggle() {
+  darkMode.value = !darkMode.value
 }
 </script>
 
 <template>
   <span class="flex items-center">
     <span class="mr-4 text-sm font-semibold">Dark Mode</span>
-    <el-switch v-model="theme" />
+    <button
+      type="button"
+      class="switch"
+      :aria-pressed="darkMode"
+      @click="toggle"
+    >
+      <span class="switch-handle" :class="{ 'translate-x-5': darkMode }" />
+    </button>
   </span>
 </template>
+
+<style scoped lang="scss">
+.switch {
+  @apply relative inline-flex h-6 w-11 items-center rounded-full bg-neutral-300 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent-emphasis;
+
+  &[aria-pressed='true'] {
+    @apply bg-accent-emphasis;
+  }
+}
+
+.switch-handle {
+  @apply inline-block h-5 w-5 transform rounded-full bg-white transition duration-200 ease-in-out;
+}
+</style>

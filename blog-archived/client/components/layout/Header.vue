@@ -1,74 +1,36 @@
-<script>
+<script setup lang="ts">
 import Logo from '@/assets/img/avatar.jpg'
-import defaultAvatar from '@/assets/img/default-avatar.png'
-import { mapGetters } from 'vuex'
 import DarkModeToggle from './DarkModeToggle.vue'
 
-export default {
-  components: {
-    DarkModeToggle,
-  },
-  data() {
-    return {
-      logoUri: Logo,
-      RegisterVisible: false,
-      SignInVisible: false,
+const outSideLinks = [
+  { href: 'https://tw.icebreaker.top/', title: 'Weapp-tailwindcss' },
+  { href: 'https://vite.icebreaker.top/', title: 'Weapp-vite' },
+  { href: 'https://ui.icebreaker.top/zh-CN', title: 'IceStack' },
+  { href: 'https://monorepo.icebreaker.top/', title: 'Monorepo' },
+  { href: 'https://eslint.icebreaker.top/', title: 'Eslint' },
+  { href: 'https://www.npmjs.com/~icebreaker', title: 'Packages' },
+]
 
-      outSideLinks: [
-        {
-          href: 'https://tw.icebreaker.top/',
-          title: 'Weapp-tailwindcss',
-        },
-        {
-          href: 'https://vite.icebreaker.top/',
-          title: 'Weapp-vite',
-        },
-        {
-          href: 'https://ui.icebreaker.top/zh-CN',
-          title: 'IceStack',
-        },
-        {
-          href: 'https://monorepo.icebreaker.top/',
-          title: 'Monorepo',
-        },
-        {
-          href: 'https://eslint.icebreaker.top/',
-          title: 'Eslint',
-        },
-        {
-          href: 'https://www.npmjs.com/~icebreaker',
-          title: 'Packages',
-        },
-      ],
-      inSideLinks: [
-
-      ],
-      defaultAvatar,
-    }
-  },
-  computed: {
-    ...mapGetters('user', ['user']),
-  },
-}
+const inSideLinks: Array<{ key: string; title: string; to: string }> = []
 </script>
 
 <template>
   <header class="site-header">
     <div class="mr-4 flex items-center">
-      <router-link class="shrink-0" to="/">
-        <img class="size-8 rounded-full" :src="logoUri">
-      </router-link>
+      <NuxtLink class="shrink-0" to="/">
+        <img class="size-8 rounded-full" :src="Logo" alt="icebreaker" loading="lazy">
+      </NuxtLink>
     </div>
     <div class="header-middle-area hidden grow text-left sm:flex">
       <nav class="nav ml-4 hidden lg:flex lg:items-center">
-        <nuxt-link
+        <NuxtLink
           v-for="inlink in inSideLinks"
           :key="inlink.key"
           class="link"
           :to="inlink.to"
         >
           {{ inlink.title }}
-        </nuxt-link>
+        </NuxtLink>
         <a
           v-for="item in outSideLinks"
           :key="item.title"
@@ -80,13 +42,10 @@ export default {
           <span>{{ item.title }}</span>
           <span class="iconify line-md--external-link" />
         </a>
-        <!-- <span>
-          <ThemeSwitch></ThemeSwitch>
-        </span> -->
       </nav>
     </div>
 
-    <client-only>
+    <ClientOnly>
       <div class="tail flex grow justify-end space-x-4 sm:grow-0">
         <DarkModeToggle />
         <OutSideLink
@@ -97,26 +56,20 @@ export default {
           <FontAwesomeIcon :icon="['fab', 'github']" />
         </OutSideLink>
       </div>
-    </client-only>
+    </ClientOnly>
   </header>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .site-header {
   height: 64px;
-
   @apply sticky top-0 z-50 flex items-center bg-header-bg px-4 py-4 text-sm text-header-text/70 md:px-6 lg:px-8;
-
-  border-bottom: 1px;
-  border-style: solid;
-  border-color: theme('colors.border-muted');
-
+  border-bottom: 1px solid theme('colors.border-muted');
   @apply dark:border-transparent;
 
   .header-middle-area {
     .nav {
       .link {
-        // https://tailwindcss.com/docs/upgrading-to-v2#update-renamed-utility-classes
         @apply mr-4 cursor-pointer whitespace-nowrap font-semibold text-header-text;
 
         &:hover,

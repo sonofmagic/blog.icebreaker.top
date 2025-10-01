@@ -5,5 +5,5 @@ export default {
 </script>
 
 <template>
-  <nuxt />
+  <NuxtPage />
 </template>

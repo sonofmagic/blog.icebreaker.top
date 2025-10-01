@@ -34,9 +34,9 @@ export default {
       <div>version:{{ version }}</div>
       <div class="flex flex-col items-center md:flex-row">
         <div class="space-x-3">
-          <nuxt-link to="/sitemap">
+          <NuxtLink to="/sitemap">
             站点地图
-          </nuxt-link>
+          </NuxtLink>
           <OutSideLink
             class="text-base hover:text-gray-700"
             raw

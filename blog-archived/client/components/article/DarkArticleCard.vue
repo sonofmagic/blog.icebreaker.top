@@ -1,13 +1,16 @@
-<script>
-export default {
-  name: 'DarkArticleCard',
-  props: {
-    item: {
-      type: [Object],
-      default: () => {},
-    },
-  },
+<script setup lang="ts">
+import { computed } from 'vue'
+import Tags from '@/components/global/Tags.vue'
+import { formatTimespan } from '@/utils/datetime'
+import type { ArticleSummary } from '@/api/article'
+
+interface Props {
+  item: ArticleSummary
 }
+
+const props = defineProps<Props>()
+
+const publishedAgo = computed(() => (props.item.date ? formatTimespan(props.item.date) : ''))
 </script>
 
 <template>
@@ -21,14 +24,14 @@ export default {
         <img
           width="32"
           height="32"
-          class="rounded-full flex-shrink-0"
+          class="flex-shrink-0 rounded-full"
           src="@/assets/img/avatar.jpg"
           alt="icebreaker"
         >
       </OutSideLink>
     </span>
-    <div class="flex flex-col flex-1 pt-1">
-      <div class="flex justify-between items-baseline">
+    <div class="flex flex-1 flex-col pt-1">
+      <div class="flex items-baseline justify-between">
         <div>
           <OutSideLink
             class="font-semibold"
@@ -36,52 +39,52 @@ export default {
           >
             sonofmagic
           </OutSideLink>
-          <span class="no-underline text-fg-default">
-            publish <span class="break-all inline-block">an article</span>
+          <span class="text-fg-default">
+            publish <span class="inline-block break-all">an article</span>
             <span
-              class="whitespace-nowrap text-xs text-fg-muted ml-1"
+              v-if="publishedAgo"
+              class="ml-1 inline-block whitespace-nowrap text-xs text-fg-muted"
               :title="item.date"
             >
-              {{ item.date | timespanFilter }}</span>
+              {{ publishedAgo }}
+            </span>
           </span>
         </div>
       </div>
       <div class="card-body">
-        <div class="p-4 flex flex-col">
-          <nuxt-link class="card-main-title link" :to="item.path">
+        <div class="flex flex-col p-4">
+          <NuxtLink class="card-main-title link" :to="item.path">
             {{ item.title }}
-          </nuxt-link>
+          </NuxtLink>
 
-          <div class="mt-1 break-all text-fg-muted mb-2.5">
+          <div v-if="item.description" class="mb-2.5 mt-1 break-all text-fg-muted">
             {{ item.description }}
           </div>
           <div class="bottom-row">
-            <tags :tags="item.tags" />
+            <Tags :tags="item.tags" />
             <div class="right-part">
-              <span class="inline-block">阅读时间 {{ item.readingMinutes }} 分钟</span>
-              <span class="inline-block">共{{ item.readingWords }}个字</span>
+              <span v-if="item.readingMinutes" class="inline-block">阅读时间 {{ item.readingMinutes }} 分钟</span>
+              <span v-if="item.readingWords" class="inline-block">共 {{ item.readingWords }} 个字</span>
             </div>
           </div>
         </div>
-        <!-- <div class="p-4 border-t border-solid border-border-default"></div> -->
       </div>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .ice-card {
-  @apply flex py-4 border-b border-solid border-border-muted;
+  @apply flex border-b border-solid border-border-muted py-4;
   .card-body {
-    @apply mt-2 bg-canvas-default rounded-md border border-solid border-border-default;
+    @apply mt-2 rounded-md border border-solid border-border-default bg-canvas-default;
     .card-main-title {
-      // link
-      @apply block font-semibold text-base text-fg-default;
+      @apply block text-base font-semibold text-fg-default;
     }
     .bottom-row {
-      @apply flex justify-between items-baseline;
+      @apply flex items-baseline justify-between;
       .right-part {
-        @apply text-xs text-fg-muted space-x-4 space-y-1 flex flex-col items-end sm:flex-row sm:items-baseline min-w-[90px];
+        @apply flex min-w-[90px] flex-col items-end space-y-1 text-xs text-fg-muted sm:flex-row sm:items-baseline sm:space-x-4 sm:space-y-0;
       }
     }
   }

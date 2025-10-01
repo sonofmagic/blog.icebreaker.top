@@ -14,7 +14,7 @@ export default {
 <template>
   <CommonSlot>
     <div>
-      <Nuxt />
+      <NuxtPage />
     </div>
   </CommonSlot>
 </template>

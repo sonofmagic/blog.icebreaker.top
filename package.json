@@ -79,11 +79,6 @@
     "registry": "https://registry.npmjs.org"
   },
   "pnpm": {
-    "overrides": {
-      "vue": "^2.7",
-      "vue-server-renderer": "^2.7",
-      "vue-template-compiler": "^2.7"
-    },
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "@tailwindcss/oxide",
@@ -97,10 +92,5 @@
       "vue-echarts",
       "workerd"
     ]
-  },
-  "resolutions": {
-    "vue": "^2.7",
-    "vue-server-renderer": "^2.7",
-    "vue-template-compiler": "^2.7"
   }
 }

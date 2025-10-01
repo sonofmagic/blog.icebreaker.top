@@ -39,7 +39,7 @@ export default {
     </div>
   </OutSideLink>
 
-  <nuxt-link v-else :to="to" class="border-border-default rounded-md border">
+  <NuxtLink v-else :to="to" class="border-border-default rounded-md border">
     <div class="p-4 shadow">
       <div class="text-accent-fg mb-3 text-2xl font-thin hover:underline">
         {{ title }}
@@ -48,5 +48,5 @@ export default {
         {{ desc }}
       </div>
     </div>
-  </nuxt-link>
+  </NuxtLink>
 </template>

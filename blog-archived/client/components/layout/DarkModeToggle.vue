@@ -1,77 +1,36 @@
-<script>
-import { LocalStorageKey } from '@/enum/user'
+<script setup lang="ts">
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useToggleTheme } from 'theme-transition'
-export default {
-  data() {
-    return {
+import { useTheme } from '@/composables/useTheme'
 
-    }
-  },
-  head() {
-    const htmlAttrs = {}
-    if (process.client) {
-      htmlAttrs[LocalStorageKey.ThemeMode] = this.mode
-    }
-    return {
-      htmlAttrs,
-    }
-  },
-  computed: {
-    mode: {
-      get() {
-        return this.$store.state.theme
-      },
-      set(theme) {
-        this.$store.commit('set_theme', theme)
+const { isDark, setTheme } = useTheme()
+
+const icon = computed(() => (isDark.value ? ['fas', 'sun'] : ['fas', 'moon']))
+
+const toggleHandler = ref<((event?: MouseEvent) => void) | null>(null)
+
+onMounted(() => {
+  const { toggleTheme } = useToggleTheme({
+    isCurrentDark: () => isDark.value,
+    toggle: () => {
+      setTheme(isDark.value ? 'light' : 'dark')
+    },
+    viewTransition: {
+      after: async () => {
+        await nextTick()
       },
     },
-    isDark({ mode }) {
-      return mode === 'dark'
-    },
-    isLight({ mode }) {
-      return mode === 'light'
-    },
-    icon({ isDark }) {
-      return isDark ? ['fas', 'sun'] : ['fas', 'moon']
-    },
-  },
-  created() {
-    if (!process.server) {
-      const { toggleTheme } = useToggleTheme({
-        isCurrentDark: () => {
-          return this.isDark
-        },
-        toggle: this.toggle,
-        viewTransition: {
-          after: async () => {
-            await this.$nextTick()
-          },
-        },
-      })
-      this.toggleTheme = toggleTheme
-    }
-  },
-  methods: {
-    setTheme(theme) {
-      this.mode = theme
-    },
-    toggle() {
-      if (this.isDark) {
-        this.setTheme('light')
-      }
-      else {
-        this.setTheme('dark')
-      }
-    },
-    toggleTheme(event) {
-      this.toggleTheme(event)
-    },
-  },
+  })
+  toggleHandler.value = toggleTheme
+})
+
+function toggleTheme(event?: MouseEvent) {
+  toggleHandler.value?.(event)
 }
 </script>
 
 <template>
   <div class="flex items-center text-xl">
-    <font-awesome-icon class="cursor-pointer" :icon="icon" @click="toggleTheme" />
+    <FontAwesomeIcon class="cursor-pointer" :icon="icon" @click="toggleTheme" />
   </div>
 </template>
