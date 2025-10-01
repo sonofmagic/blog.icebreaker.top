@@ -90,7 +90,7 @@ export default {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .clip-miniprogram-qrcode {
   clip-path: ellipse(80px 80px at center);
 }
@@ -103,23 +103,21 @@ export default {
 
 .border-image {
   @apply relative;
+}
 
-  &:hover,
-  &:focus {
-    &::before {
-      animation: SidebarCreate_rainbowSlide 0.75s linear infinite;
-    }
-  }
+.border-image:hover::before,
+.border-image:focus::before {
+  animation: SidebarCreate_rainbowSlide 0.75s linear infinite;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200%;
-    height: 100%;
-    background: linear-gradient(115deg, #4fcf70, #fad648, #a767e5, #12bcfe, #44ce7b);
-    background-size: 50% 100%;
-  }
+.border-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(115deg, #4fcf70, #fad648, #a767e5, #12bcfe, #44ce7b);
+  background-size: 50% 100%;
 }
 </style>

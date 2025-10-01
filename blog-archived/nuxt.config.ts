@@ -61,7 +61,7 @@ export default defineNuxtConfig({
   },
   css: [
     '@fortawesome/fontawesome-svg-core/styles.css',
-    '@/assets/scss/global.scss',
+    '@/assets/css/tailwind.css',
   ],
   components: [
     { path: '@/components', pathPrefix: false },
@@ -70,7 +70,6 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxt/content',
-    '@nuxtjs/tailwindcss',
     '@vueuse/nuxt',
     '@nuxtjs/sitemap',
   ],
@@ -87,11 +86,6 @@ export default defineNuxtConfig({
       changefreq: 'daily',
       priority: 1,
     },
-  },
-  tailwindcss: {
-    cssPath: '~/assets/scss/tailwind.scss',
-    configPath: '../tailwind.config.js',
-    exposeConfig: false,
   },
   content: {
     sources: {
@@ -120,13 +114,10 @@ export default defineNuxtConfig({
   imports: {
     dirs: ['composables', 'stores'],
   },
-  vite: {
-    css: {
-      preprocessorOptions: {
-        scss: {
-          additionalData: '@use "@/assets/scss/variables.scss" as *;',
-        },
-      },
+  postcss: {
+    plugins: {
+      '@tailwindcss/postcss': {},
+      autoprefixer: {},
     },
   },
 })

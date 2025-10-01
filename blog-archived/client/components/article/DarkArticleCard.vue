@@ -73,20 +73,24 @@ const publishedAgo = computed(() => (props.item.date ? formatTimespan(props.item
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .ice-card {
   @apply flex border-b border-solid border-border-muted py-4;
-  .card-body {
-    @apply mt-2 rounded-md border border-solid border-border-default bg-canvas-default;
-    .card-main-title {
-      @apply block text-base font-semibold text-fg-default;
-    }
-    .bottom-row {
-      @apply flex items-baseline justify-between;
-      .right-part {
-        @apply flex min-w-[90px] flex-col items-end space-y-1 text-xs text-fg-muted sm:flex-row sm:items-baseline sm:space-x-4 sm:space-y-0;
-      }
-    }
-  }
+}
+
+.ice-card .card-body {
+  @apply mt-2 rounded-md border border-solid border-border-default bg-canvas-default;
+}
+
+.ice-card .card-body .card-main-title {
+  @apply block text-base font-semibold text-fg-default;
+}
+
+.ice-card .card-body .bottom-row {
+  @apply flex items-baseline justify-between;
+}
+
+.ice-card .card-body .bottom-row .right-part {
+  @apply flex min-w-[90px] flex-col items-end space-y-1 text-xs text-fg-muted sm:flex-row sm:items-baseline sm:space-x-4 sm:space-y-0;
 }
 </style>

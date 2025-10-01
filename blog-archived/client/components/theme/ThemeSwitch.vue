@@ -30,13 +30,13 @@ function toggle() {
   </span>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .switch {
   @apply relative inline-flex h-6 w-11 items-center rounded-full bg-neutral-300 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent-emphasis;
+}
 
-  &[aria-pressed='true'] {
-    @apply bg-accent-emphasis;
-  }
+.switch[aria-pressed='true'] {
+  @apply bg-accent-emphasis;
 }
 
 .switch-handle {

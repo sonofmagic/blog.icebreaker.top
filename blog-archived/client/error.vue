@@ -23,7 +23,7 @@ defineProps<{ error: NuxtError }>()
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .land {
   height: 35vh;
 }

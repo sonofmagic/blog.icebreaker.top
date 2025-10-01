@@ -18,7 +18,7 @@ export default {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .ice-tag {
   @apply inline-block text-accent-fg bg-accent-subtle/20 px-2 text-xs rounded-3xl border border-solid border-transparent cursor-pointer hover:bg-accent-emphasis hover:text-fg-on-emphasis;
 }

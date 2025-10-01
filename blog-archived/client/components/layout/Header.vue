@@ -60,40 +60,35 @@ const inSideLinks: Array<{ key: string; title: string; to: string }> = []
   </header>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .site-header {
   height: 64px;
-  @apply sticky top-0 z-50 flex items-center bg-header-bg px-4 py-4 text-sm text-header-text/70 md:px-6 lg:px-8;
-  border-bottom: 1px solid theme('colors.border-muted');
-  @apply dark:border-transparent;
+  @apply sticky top-0 z-50 flex items-center bg-header-bg px-4 py-4 text-sm text-header-text/70 md:px-6 lg:px-8 dark:border-transparent;
+  border-bottom: 1px solid rgb(var(--color-border-muted));
+}
 
-  .header-middle-area {
-    .nav {
-      .link {
-        @apply mr-4 cursor-pointer whitespace-nowrap font-semibold text-header-text;
+.site-header .header-middle-area .nav .link {
+  @apply mr-4 cursor-pointer whitespace-nowrap font-semibold text-header-text;
+}
 
-        &:hover,
-        &:focus {
-          @apply text-header-text/70;
-        }
-      }
-    }
-  }
+.site-header .header-middle-area .nav .link:hover,
+.site-header .header-middle-area .nav .link:focus {
+  @apply text-header-text/70;
+}
 
-  .tail {
-    @apply text-header-text;
+.site-header .tail {
+  @apply text-header-text;
+}
 
-    .nav-btn {
-      @apply cursor-pointer whitespace-nowrap px-2 py-1 text-base leading-6 text-white outline-none transition-opacity duration-300;
+.site-header .tail .nav-btn {
+  @apply cursor-pointer whitespace-nowrap px-2 py-1 text-base leading-6 text-white outline-none transition-opacity duration-300;
+}
 
-      &:hover {
-        @apply opacity-75;
-      }
+.site-header .tail .nav-btn:hover {
+  @apply opacity-75;
+}
 
-      &.round-border {
-        @apply overflow-auto rounded-md border border-solid border-gray-200;
-      }
-    }
-  }
+.site-header .tail .nav-btn.round-border {
+  @apply overflow-auto rounded-md border border-solid border-gray-200;
 }
 </style>

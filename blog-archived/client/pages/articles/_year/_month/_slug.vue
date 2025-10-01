@@ -115,7 +115,7 @@ function scrollTo(id: string) {
   </div>
 </template>
 
-<style lang="scss">
+<style>
 .compose-nuxt-content {
   @apply prose prose-sm prose-invert max-w-none text-fg-default antialiased sm:prose-base;
 }

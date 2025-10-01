@@ -99,42 +99,26 @@ export default {
   </div>
 </template>
 
-<style lang="scss">
-[data-color-mode='light'] {
-  .a-dark-soul {
-    .npx-command {
-      @apply text-black/80 #{!important};
-    }
-  }
+<style>
+[data-color-mode='light'] .a-dark-soul .npx-command {
+  @apply text-black/80 !important;
 }
 </style>
 
-<style lang="scss" scoped>
+<style scoped>
 .a-dark-soul {
   @apply text-sm text-fg-default;
+}
 
-  .npx-command {
-    @apply relative flex
-              cursor-pointer
-              items-center
-              rounded-md
-              border
-              border-solid
-              border-[#cccccc] py-2 pl-3
-              pr-5
-              text-white/80 hover:border-[#00C642] hover:bg-[rgb(219,255,219)] hover:text-black/80;
+.a-dark-soul .npx-command {
+  @apply relative flex cursor-pointer items-center rounded-md border border-solid border-[#cccccc] py-2 pl-3 pr-5 text-white/80 hover:border-[#00C642] hover:bg-[rgb(219,255,219)] hover:text-black/80;
+}
 
-    .copy-icon {
-      @apply absolute right-1 opacity-0 transition-opacity;
+.a-dark-soul .npx-command .copy-icon {
+  @apply absolute right-1 opacity-0 transition-opacity;
+}
 
-      //
-    }
-
-    &:hover {
-      .copy-icon {
-        @apply opacity-100;
-      }
-    }
-  }
+.a-dark-soul .npx-command:hover .copy-icon {
+  @apply opacity-100;
 }
 </style>
