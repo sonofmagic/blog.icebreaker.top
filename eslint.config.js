@@ -10,7 +10,7 @@ export default icebreaker(
         },
       },
     },
-    tailwindcss: true,
+    tailwindcss: false,
     ignores: ['**/fixtures/**'],
   },
 )
