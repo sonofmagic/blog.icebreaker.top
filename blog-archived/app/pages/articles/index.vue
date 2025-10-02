@@ -45,41 +45,48 @@ const articleCount = computed(() => articles.value.length)
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <header class="space-y-3">
-      <p class="text-xs uppercase tracking-[0.24em] text-fg-subtle">All Posts</p>
-      <h1 class="text-2xl font-semibold text-fg-default">全部文章</h1>
-      <p class="text-sm text-fg-muted">这些笔记按时间倒序排好，方便你沿着时间线回看当时的想法。</p>
-      <p class="text-xs text-fg-subtle">目前共 {{ articleCount }} 篇。</p>
+  <UStack gap="6">
+    <header class="space-y-2">
+      <UBadge variant="soft" color="primary">All posts</UBadge>
+      <UHeading tag="h1" size="xl" weight="semibold">文章总览</UHeading>
+      <p class="text-sm text-muted">这些笔记按时间倒序排好，方便沿着时间线回看当时的想法。</p>
+      <p class="text-xs text-muted">目前共 {{ articleCount }} 篇。</p>
     </header>
 
-    <section class="rounded-2xl border border-border-muted bg-canvas-default shadow-card">
-      <div v-if="pending" class="flex items-center justify-center px-6 py-10 text-sm text-fg-muted">
-        正在加载，请稍候。
-      </div>
+    <UCard variant="ghost" class="border border-[--gh-border-default] shadow-sm">
+      <template #header>
+        <div class="flex items-center justify-between">
+          <UHeading tag="h2" size="sm" weight="medium">文章列表</UHeading>
+          <UButton variant="ghost" icon="i-lucide-refresh-ccw" @click="refresh">刷新</UButton>
+        </div>
+      </template>
 
-      <div v-else-if="error" class="px-6 py-6 text-sm text-red-400">
-        数据暂不可用，请稍后重试。
-      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <UCard v-if="pending" variant="ghost" class="col-span-full border border-dashed border-[--gh-border-default] bg-[--gh-canvas-inset] text-center text-sm text-muted">
+          正在加载，请稍候。
+        </UCard>
 
-      <template v-else>
-        <div class="flex flex-col divide-y divide-border-muted">
+        <UAlert
+          v-else-if="error"
+          color="error"
+          variant="soft"
+          icon="i-lucide-alert-triangle"
+          class="col-span-full"
+        >
+          数据暂不可用，请稍后重试。
+        </UAlert>
+
+        <template v-else>
           <ArticleCard
             v-for="article in articles"
             :key="article.path"
             :article="article"
-            class="rounded-none border-0 shadow-none first:rounded-t-2xl last:rounded-b-2xl"
           />
-          <p v-if="articles.length === 0" class="px-6 py-12 text-center text-sm text-fg-muted">
+          <UCard v-if="articles.length === 0" variant="ghost" class="col-span-full border border-dashed border-[--gh-border-default] bg-[--gh-canvas-inset] text-center text-sm text-muted">
             暂无内容，敬请期待后续更新。
-          </p>
-        </div>
-        <div class="border-t border-border-muted px-6 py-4 text-xs text-fg-subtle">
-          <button type="button" class="text-accent-emphasis hover:text-accent-emphasis" @click="refresh">
-            刷新列表
-          </button>
-        </div>
-      </template>
-    </section>
-  </div>
+          </UCard>
+        </template>
+      </div>
+    </UCard>
+  </UStack>
 </template>

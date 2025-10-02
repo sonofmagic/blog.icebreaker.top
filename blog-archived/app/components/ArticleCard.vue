@@ -13,43 +13,45 @@ const props = defineProps<{ article: ArticleSummary }>()
 </script>
 
 <template>
-  <article class="rounded-xl border border-border-muted bg-canvas-default p-5 shadow-card transition hover:border-border-default hover:shadow-card-hover">
-    <header class="flex flex-col gap-2">
-      <h2 class="text-xl font-semibold text-fg-default">
-        <NuxtLink :to="props.article.path" class="flex items-center gap-2 text-inherit hover:text-accent-emphasis">
-          <Icon name="line-md:text-box" class="h-4 w-4 text-fg-muted" />
-          <span>{{ props.article.title }}</span>
-        </NuxtLink>
-      </h2>
-      <p v-if="props.article.description" class="text-sm leading-relaxed text-fg-muted">
-        {{ props.article.description }}
-      </p>
-    </header>
+  <UCard variant="ghost" class="h-full border border-[--gh-border-default] bg-[--gh-canvas-default] transition hover:border-[--gh-accent-emphasis]">
+    <UStack :gap="3">
+      <div class="flex flex-col gap-1">
+        <ULink :to="props.article.path" class="flex items-center gap-2 text-base font-semibold text-foreground hover:text-primary">
+          <UIcon name="i-lucide-file-text" class="size-4 text-muted" />
+          {{ props.article.title }}
+        </ULink>
+        <p v-if="props.article.description" class="text-sm text-muted">
+          {{ props.article.description }}
+        </p>
+      </div>
 
-    <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-fg-subtle">
-      <span v-if="props.article.date" class="inline-flex items-center gap-1">
-        <Icon name="line-md:calendar" class="h-3.5 w-3.5" />
-        <span>发表于 {{ props.article.date }}</span>
-      </span>
-      <span v-if="props.article.readingMinutes" class="inline-flex items-center gap-1">
-        <Icon name="line-md:document" class="h-3.5 w-3.5" />
-        <span>约 {{ props.article.readingMinutes }} 分钟</span>
-      </span>
-      <span v-if="props.article.readingWords" class="inline-flex items-center gap-1">
-        <Icon name="line-md:clipboard" class="h-3.5 w-3.5" />
-        <span>共 {{ props.article.readingWords }} 字</span>
-      </span>
-    </div>
+      <div class="flex flex-wrap items-center gap-3 text-xs text-muted">
+        <span v-if="props.article.date" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-calendar" class="size-3.5" />
+          发布于 {{ props.article.date }}
+        </span>
+        <span v-if="props.article.readingMinutes" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-timer" class="size-3.5" />
+          约 {{ props.article.readingMinutes }} 分钟
+        </span>
+        <span v-if="props.article.readingWords" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-type" class="size-3.5" />
+          共 {{ props.article.readingWords }} 字
+        </span>
+      </div>
 
-    <div v-if="props.article.tags.length" class="mt-4 flex flex-wrap gap-2">
-      <span
-        v-for="tag in props.article.tags"
-        :key="tag"
-        class="inline-flex items-center gap-1 rounded-full border border-border-muted bg-accent-subtle px-2.5 py-1 text-xs font-medium text-accent-emphasis"
-      >
-        <Icon name="line-md:hash" class="h-3 w-3" />
-        <span>{{ tag }}</span>
-      </span>
-    </div>
-  </article>
+      <div v-if="props.article.tags.length" class="flex flex-wrap gap-2">
+        <UBadge
+          v-for="tag in props.article.tags"
+          :key="tag"
+          variant="soft"
+          size="sm"
+          class="gap-1"
+        >
+          <UIcon name="i-lucide-hash" class="size-3" />
+          {{ tag }}
+        </UBadge>
+      </div>
+    </UStack>
+  </UCard>
 </template>

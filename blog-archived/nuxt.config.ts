@@ -19,6 +19,7 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
     '@nuxt/content',
+    '@nuxt/ui',
   ],
   colorMode: {
     preference: 'soft-dark',
@@ -29,6 +30,7 @@ export default defineNuxtConfig({
     storageKey: 'icebreakers-theme',
     modes: {
       'soft-dark': 'soft-dark',
+      'dark': 'dark',
       'light': 'light',
     },
   },
@@ -44,18 +46,6 @@ export default defineNuxtConfig({
     },
   },
   content: {
-    highlight: {
-      preload: ['ts', 'js', 'json', 'bash', 'yaml', 'vue', 'md', 'html', 'css'],
-      highlighter: {
-        name: 'shiki',
-        options: {
-          themes: {
-            default: 'github-dark-dimmed',
-            dark: 'github-dark-dimmed',
-            light: 'github-light',
-          },
-        },
-      },
-    },
+
   },
 })
