@@ -5,8 +5,7 @@ const route = useRoute()
 const currentYear = new Date().getFullYear()
 
 const navLinks = [
-  { label: '概览', to: '/', icon: 'i-lucide-compass' },
-  { label: '文章', to: '/articles', icon: 'i-lucide-book-open' },
+  { label: '文章', to: '/', icon: 'i-lucide-book-open' },
 ] as const
 
 const profileLinks = [

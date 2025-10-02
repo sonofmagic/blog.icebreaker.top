@@ -2,21 +2,6 @@
 import { computed } from 'vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 
-const PAGE_SIZE = 6
-
-const profileMeta = [
-  { label: 'icebreaker / yang qiming', icon: 'i-lucide-user' },
-  { label: 'Shanghai, China', icon: 'i-lucide-map-pin' },
-  { label: 'hi@icebreaker.top', icon: 'i-lucide-mail', href: 'mailto:hi@icebreaker.top' },
-  { label: 'github.com/innno', icon: 'i-lucide-github', href: 'https://github.com/innno' },
-]
-
-const nowItems = [
-  { label: '用照片写每周一次的 mini log。' },
-  { label: '读完《当下的力量》，整理读书卡片。' },
-  { label: '为 blog 做一些样式实验。' },
-]
-
 function parseMeta(entry: Record<string, any>) {
   if (typeof entry.meta === 'string') {
     try {
@@ -44,7 +29,7 @@ function mapToSummary(entry: Record<string, any>) {
   }
 }
 
-const { data, pending, error, refresh } = await useAsyncData('articles:index', async () => {
+const { data, pending, error, refresh } = await useAsyncData('articles:home', async () => {
   const entries = await queryCollection('articles').all()
   const articleEntries = Array.isArray(entries) ? entries : []
 
@@ -52,91 +37,40 @@ const { data, pending, error, refresh } = await useAsyncData('articles:index', a
     .map(entry => ({ ...entry, ...parseMeta(entry) }))
     .filter(entry => entry.draft !== true)
     .sort((a, b) => new Date(b.date ?? '').getTime() - new Date(a.date ?? '').getTime())
-    .slice(0, PAGE_SIZE)
     .map(mapToSummary)
 })
 
-const recentArticles = computed(() => data.value || [])
-const hasArticles = computed(() => recentArticles.value.length > 0)
+const articles = computed(() => data.value || [])
+const articleCount = computed(() => articles.value.length)
 </script>
 
 <template>
-  <UStack gap="8">
-    <UCard variant="ghost" class="app-card rounded-3xl p-6 md:p-8">
-      <template #header>
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div class="space-y-3">
-            <UHeading tag="h1" size="xl" weight="semibold" class="tracking-tight">你好，我是 icebreaker</UHeading>
-            <p class="max-w-2xl text-sm text-muted">
-              我在这里写下真实的日常、折腾的作品，以及那些不想弄丢的瞬间。希望这些文字能成为自己与世界对话的方式，也能在你需要的时候，带来一点安静与陪伴。
-            </p>
-          </div>
-          <div class="relative">
-            <span class="absolute -right-3 -top-3 hidden rounded-full bg-[--gh-accent-subtle] px-2 py-1 text-[10px] font-medium uppercase text-[--gh-accent-emphasis] tracking-[0.2em] md:inline-flex">
-              hello
-            </span>
-            <UAvatar icon="i-lucide-feather" size="xl" variant="soft" class="border border-[--surface-border] shadow-sm" />
-          </div>
-        </div>
-      </template>
-
-      <div class="grid gap-6 md:grid-cols-[2fr,1fr]">
-        <div>
-          <UList :items="profileMeta" class="space-y-3">
-            <template #item="{ item }">
-              <ULink
-                v-if="item.href"
-                :href="item.href"
-                target="_blank"
-                rel="noopener"
-                class="flex items-center gap-2 text-sm text-muted transition hover:text-[--gh-accent-emphasis]"
-              >
-                <UIcon :name="item.icon" class="size-4 text-[--gh-accent-emphasis]" />
-                {{ item.label }}
-              </ULink>
-              <div v-else class="flex items-center gap-2 text-sm text-muted">
-                <UIcon :name="item.icon" class="size-4 text-[--gh-accent-emphasis]" />
-                {{ item.label }}
-              </div>
-            </template>
-          </UList>
-        </div>
-
-        <UCard variant="ghost" class="app-card-soft rounded-2xl">
-          <template #header>
-            <UHeading tag="h3" size="sm" weight="medium" class="tracking-wide text-muted-strong">最近在忙</UHeading>
-          </template>
-          <UList :items="nowItems" icon="i-lucide-dot" class="text-sm text-muted" />
-        </UCard>
-      </div>
-    </UCard>
-
-    <div class="rounded-3xl border border-dashed border-[--surface-border] bg-[--panel-bg-soft] p-6 text-sm text-muted shadow-[0_18px_40px_-28px_var(--glow-primary)]">
-      <div class="flex flex-wrap items-center gap-2 text-[0.7rem] uppercase tracking-[0.35em] text-[--gh-accent-emphasis]">
-        <UIcon name="i-lucide-stars" class="size-4" />
-        <span>signal</span>
-      </div>
-      <p class="mt-3 leading-relaxed text-muted">
-        写博客对我来说像是一项长期的修复工程：修复记忆、修复表达，也修复自己面对世界时的勇气。如果你读到了某个瞬间，也欢迎把你的故事发给我。
-      </p>
-    </div>
+  <UStack gap="6">
+    <header class="app-card-soft space-y-2 rounded-3xl p-6 text-muted">
+      <UBadge variant="soft" color="primary">All posts</UBadge>
+      <UHeading tag="h1" size="xl" weight="semibold" class="text-muted-strong">全部文章</UHeading>
+      <p class="text-sm">按时间倒序排列，方便从最新开始阅读。</p>
+      <p class="text-xs">目前共 {{ articleCount }} 篇。</p>
+    </header>
 
     <UCard variant="ghost" class="app-card rounded-3xl p-6">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <UHeading tag="h2" size="md" weight="semibold" class="tracking-tight">最近写下的内容</UHeading>
-            <p class="text-sm text-muted">随手的想法、游记、摘录，都记录在这里。</p>
+          <div class="flex items-center gap-2 text-muted-strong">
+            <span class="flex size-9 items-center justify-center rounded-full bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]">
+              <UIcon name="i-lucide-align-left" class="size-4" />
+            </span>
+            <UHeading tag="h2" size="sm" weight="medium">文章列表</UHeading>
           </div>
-          <UButton to="/articles" variant="ghost" icon="i-lucide-arrow-right" class="rounded-full border border-transparent bg-[--panel-bg-soft] px-4">
-            查看全部
+          <UButton variant="ghost" icon="i-lucide-refresh-ccw" class="rounded-full border border-transparent px-4" @click="refresh">
+            刷新
           </UButton>
         </div>
       </template>
 
       <div class="grid gap-4 md:grid-cols-2">
         <UCard v-if="pending" variant="ghost" class="app-placeholder col-span-full rounded-2xl p-6 text-center text-sm">
-          正在加载文章…
+          正在加载，请稍候。
         </UCard>
 
         <UAlert
@@ -146,43 +80,19 @@ const hasArticles = computed(() => recentArticles.value.length > 0)
           icon="i-lucide-alert-triangle"
           class="col-span-full"
         >
-          加载失败，请稍后再试。
+          数据暂不可用，请稍后重试。
         </UAlert>
 
         <template v-else>
           <ArticleCard
-            v-for="article in recentArticles"
+            v-for="article in articles"
             :key="article.path"
             :article="article"
           />
-          <UCard v-if="!hasArticles" variant="ghost" class="app-placeholder col-span-full rounded-2xl p-6 text-center text-sm">
-            暂时还没有写新的内容，改天再来看看吧。
+          <UCard v-if="articles.length === 0" variant="ghost" class="app-placeholder col-span-full rounded-2xl p-6 text-center text-sm">
+            暂无内容，敬请期待后续更新。
           </UCard>
         </template>
-      </div>
-
-      <template #footer>
-        <div class="flex items-center justify-end">
-          <UButton variant="ghost" icon="i-lucide-refresh-ccw" class="rounded-full border border-transparent px-4" @click="refresh">
-            刷新列表
-          </UButton>
-        </div>
-      </template>
-    </UCard>
-
-    <UCard variant="ghost" class="app-card rounded-3xl p-6">
-      <template #header>
-        <div class="flex items-center gap-2">
-          <span class="flex size-9 items-center justify-center rounded-full bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]">
-            <UIcon name="i-lucide-heart" class="size-4" />
-          </span>
-          <UHeading tag="h2" size="md" weight="semibold">关于这个小站</UHeading>
-        </div>
-      </template>
-      <div class="prose prose-sm text-muted">
-        <p>
-          这里的文章大多记录针对生活、旅行、阅读的感受，也会偶尔写一点技术随笔。没有固定的更新节奏，只在灵感出现或心情平静时动笔。如果你有共鸣，欢迎写信给我。
-        </p>
       </div>
     </UCard>
   </UStack>
