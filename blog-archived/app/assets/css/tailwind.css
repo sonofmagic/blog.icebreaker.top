@@ -290,6 +290,16 @@
     transform: translateY(-2px);
   }
 
+  .app-card-static:hover {
+    background: var(--surface-card);
+    border-color: var(--surface-border);
+    box-shadow:
+      var(--surface-shadow),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 24px 50px -24px var(--glow-primary);
+    transform: none;
+  }
+
   .app-card::after,
   .app-card-soft::after {
     content: '';

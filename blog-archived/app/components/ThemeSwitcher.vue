@@ -33,60 +33,41 @@ function setMode(key: ModeKey) {
   colorMode.value = key
 }
 
-function onSelectChange(event: Event) {
-  const target = event.target as HTMLSelectElement | null
-  const next = target?.value as ModeKey | undefined
-  if (next) {
-    setMode(next)
-  }
+const isDark = computed(() => activeKey.value === 'dark')
+
+const toggleIcon = computed(() => (isDark.value ? 'i-lucide-sun' : 'i-lucide-moon-star'))
+
+const toggleLabel = computed(() => (isDark.value ? '切换到亮色主题' : '切换到暗色主题'))
+
+function toggleMode() {
+  setMode(isDark.value ? 'light' : 'dark')
 }
+
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <div v-if="isMounted" class="hidden items-center gap-2 md:inline-flex">
-      <UButton
-        v-for="mode in modes"
-        :key="mode.key"
-        :title="`${mode.label} · ${mode.description}`"
-        :aria-label="`切换为${mode.label}主题`"
-        :aria-pressed="activeKey === mode.key"
-        :variant="activeKey === mode.key ? 'solid' : 'ghost'"
-        :color="activeKey === mode.key ? 'primary' : 'neutral'"
-        :icon="mode.icon"
-        size="sm"
-        class="gap-1"
-        @click="setMode(mode.key)"
-      >
-        <span class="hidden text-xs font-medium sm:inline">{{ mode.label }}</span>
-      </UButton>
-    </div>
-
-    <div v-else>
-      <UButton
-        icon="i-lucide-cloud-moon"
-        variant="ghost"
-        color="neutral"
-        size="sm"
-        aria-label="在客户端渲染后启用主题切换"
-        title="主题切换"
-      />
-    </div>
-
-    <select
+    <UButton
       v-if="isMounted"
-      :value="activeKey"
-      class="md:hidden rounded-full border border-[--surface-border] bg-transparent px-3 py-1 text-xs text-muted"
-      aria-label="选择主题"
-      @change="onSelectChange"
-    >
-      <option
-        v-for="mode in modes"
-        :key="mode.key"
-        :value="mode.key"
-      >
-        {{ mode.label }}
-      </option>
-    </select>
+      :icon="toggleIcon"
+      variant="ghost"
+      color="neutral"
+      size="sm"
+      class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-lg"
+      :aria-label="toggleLabel"
+      :aria-pressed="isDark"
+      :title="`当前为${isDark ? '暗色' : '亮色'}主题 · ${toggleLabel}`"
+      @click="toggleMode"
+    />
+    <UButton
+      v-else
+      icon="i-lucide-cloud-moon"
+      variant="ghost"
+      color="neutral"
+      size="sm"
+      class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-lg"
+      aria-label="在客户端渲染后启用主题切换"
+      title="主题切换"
+    />
   </div>
 </template>

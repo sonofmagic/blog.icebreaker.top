@@ -24,7 +24,9 @@ function isActiveLink(path: string) {
 <template>
   <UApp>
     <div class="app-shell text-[--gh-fg-default] antialiased">
-      <header class="app-header mx-auto mt-6 w-[min(100%,_1100px)] rounded-3xl px-6 py-4">
+      <header
+        class="app-header sticky top-3 z-40 mx-auto mt-4 w-[min(100%,_1100px)] rounded-3xl border border-[--surface-border] bg-[--panel-bg-soft] px-4 py-3 shadow-sm backdrop-blur-md transition-all duration-200 sm:top-6 sm:mt-6 sm:px-6 sm:py-4"
+      >
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex flex-wrap items-center gap-6">
             <ULink
@@ -56,7 +58,7 @@ function isActiveLink(path: string) {
             </nav>
           </div>
 
-          <div class="flex flex-nowrap items-center gap-3">
+          <div class="flex flex-nowrap items-center gap-2">
             <ThemeSwitcher />
             <div class="hidden items-center gap-2 md:flex">
               <UButton
@@ -68,9 +70,11 @@ function isActiveLink(path: string) {
                 size="sm"
                 variant="ghost"
                 :icon="link.icon"
-                class="text-muted hover:text-[--gh-accent-emphasis]"
+                class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-lg text-muted hover:text-[--gh-accent-emphasis]"
+                :aria-label="link.label"
+                :title="link.label"
               >
-                {{ link.label }}
+                <span class="sr-only">{{ link.label }}</span>
               </UButton>
             </div>
           </div>

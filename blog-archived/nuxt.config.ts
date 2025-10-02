@@ -28,10 +28,6 @@ export default defineNuxtConfig({
     classSuffix: '',
     classPrefix: '',
     storageKey: 'icebreakers-theme',
-    modes: {
-      light: 'light',
-      dark: 'dark',
-    },
   },
   vite: {
     css: {

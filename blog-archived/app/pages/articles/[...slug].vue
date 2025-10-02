@@ -51,57 +51,42 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
 </script>
 
 <template>
-  <div>
-    <UButton to="/" variant="ghost" icon="i-lucide-arrow-left" class="w-fit rounded-full border border-transparent px-4">
-      返回首页
-    </UButton>
+  <div class="flex flex-col gap-4 sm:gap-6">
+    <div class="flex items-center justify-between gap-3">
+      <UButton
+        to="/"
+        variant="ghost"
+        icon="i-lucide-arrow-left"
+        class="w-fit rounded-full border border-transparent px-3 py-2 text-sm sm:px-4"
+      >
+        返回首页
+      </UButton>
 
-    <UCard v-if="article" variant="ghost" class="app-card rounded-3xl p-6 md:p-8">
-      <template #header>
-        <div class="space-y-4">
-          <UBadge variant="soft" color="primary">
-            精选文章
-          </UBadge>
-          <h1 class="text-3xl font-semibold tracking-tight">
-            {{ article.title || '未命名文章' }}
-          </h1>
-          <p v-if="article.description" class="text-sm text-muted">
-            {{ article.description }}
-          </p>
-          <div class="flex flex-wrap items-center gap-3 text-xs text-muted">
-            <span v-if="article.date" class="inline-flex items-center gap-1">
-              <UIcon name="i-lucide-calendar" class="size-3.5" />
-              发布于 {{ article.date }}
-            </span>
-            <span v-if="article.readingMinutes" class="inline-flex items-center gap-1">
-              <UIcon name="i-lucide-timer" class="size-3.5" />
-              约 {{ article.readingMinutes }} 分钟
-            </span>
-            <span v-if="article.readingWords" class="inline-flex items-center gap-1">
-              <UIcon name="i-lucide-type" class="size-3.5" />
-              共 {{ article.readingWords }} 字
-            </span>
-          </div>
-          <div v-if="article.tags?.length" class="flex flex-wrap gap-2">
-            <UBadge
-              v-for="tag in article.tags"
-              :key="tag"
-              variant="soft"
-              color="primary"
-              size="sm"
-              class="gap-1"
-            >
-              <UIcon name="i-lucide-hash" class="size-3" />
-              {{ tag }}
-            </UBadge>
-          </div>
-        </div>
-      </template>
+      <div v-if="article" class="flex flex-wrap items-center gap-3 text-xs text-muted sm:text-sm">
+        <span v-if="article.date" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-calendar" class="size-3.5" />
+          {{ article.date }}
+        </span>
+        <span v-if="article.readingMinutes" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-timer" class="size-3.5" />
+          {{ article.readingMinutes }} 分钟
+        </span>
+        <span v-if="article.readingWords" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-type" class="size-3.5" />
+          {{ article.readingWords }} 字
+        </span>
+      </div>
+    </div>
 
-      <ContentRenderer :value="article" />
-    </UCard>
+    <ContentRenderer v-if="article" :value="article" />
 
-    <UAlert v-else color="primary" variant="soft" icon="i-lucide-loader-2" class="animate-pulse">
+    <UAlert
+      v-else
+      color="primary"
+      variant="soft"
+      icon="i-lucide-loader-2"
+      class="animate-pulse text-sm sm:text-base"
+    >
       正在加载文章…
     </UAlert>
   </div>
