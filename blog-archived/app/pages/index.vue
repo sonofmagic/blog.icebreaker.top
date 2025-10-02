@@ -1,104 +1,70 @@
 <script setup lang="ts">
-import type { ArticlePageQuery, ArticleSummary } from '@/api/article'
-import { computed, reactive, ref } from 'vue'
-import { getPageList } from '@/api/article'
-import DarkArticleCard from '@/components/article/DarkArticleCard.vue'
-import CommentArea from '@/components/comment/Area.vue'
-import DarkSouls from '@/components/home/DarkSouls.vue'
-import SidebarFooter from '@/components/layout/SidebarFooter.vue'
+import { queryCollection } from '#imports'
+import ArticleCard from '@/components/ArticleCard.vue'
 
-const pagination = reactive<ArticlePageQuery>({
-  page: 1,
-  perPage: 12,
+const PAGE_SIZE = 20
+
+function mapToSummary(entry: Record<string, any>) {
+  return {
+    path: (typeof entry.path === 'string' && entry.path) || (typeof entry._path === 'string' && entry._path) || '/',
+    title: typeof entry.title === 'string' && entry.title.length > 0 ? entry.title : 'Untitled',
+    description: typeof entry.description === 'string' ? entry.description : undefined,
+    date: typeof entry.date === 'string' ? entry.date : undefined,
+    tags: Array.isArray(entry.tags) ? entry.tags.filter((tag: unknown): tag is string => typeof tag === 'string') : [],
+    readingMinutes: typeof entry.readingMinutes === 'number' ? entry.readingMinutes : undefined,
+    readingWords: typeof entry.readingWords === 'number' ? entry.readingWords : undefined,
+  }
+}
+
+const { data, pending, error, refresh } = await useAsyncData('articles:index', async () => {
+  const entries = await queryCollection('articles')
+    .andWhere(group =>
+      group
+        .where('draft', 'IS NULL')
+        .orWhere(orGroup => orGroup.where('draft', '<>', true)),
+    )
+    .order('date', 'DESC')
+    .limit(PAGE_SIZE)
+    .all()
+
+  return entries.map(mapToSummary)
 })
-
-const btnLoading = ref(false)
-const currentIdx = ref(0)
-const total = ref(0)
-const articleBuckets = ref<ArticleSummary[][]>([])
-
-const totalPage = computed(() => (pagination.perPage > 0 ? Math.ceil(total.value / pagination.perPage) : 1))
-
-const { data: initialData } = await useAsyncData('home-initial', async () => {
-  const { total: count, articles } = await getPageList(pagination)
-  return { count, articles }
-})
-
-if (initialData.value) {
-  total.value = initialData.value.count
-  articleBuckets.value[0] = initialData.value.articles
-}
-
-const btnText = computed(() => (btnLoading.value ? 'Loading more...' : 'More'))
-const hasMore = computed(() => total.value > pagination.page * pagination.perPage)
-
-async function loadPage(pageNumber: number) {
-  btnLoading.value = true
-  try {
-    const { total: count, articles } = await getPageList({
-      page: pageNumber,
-      perPage: pagination.perPage,
-    })
-    total.value = count
-    articleBuckets.value[pageNumber - 1] = articles
-  }
-  finally {
-    btnLoading.value = false
-  }
-}
-
-async function next() {
-  const nextIdx = currentIdx.value + 1
-  if (nextIdx >= totalPage.value) {
-    return
-  }
-
-  if (!articleBuckets.value[nextIdx]) {
-    pagination.page = nextIdx + 1
-    await loadPage(pagination.page)
-  }
-
-  currentIdx.value = nextIdx
-}
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-canvas-inset md:flex-row">
-    <aside class="order-2 max-w-full border-b border-r border-border-muted bg-canvas-default md:order-1 md:w-4/12 md:max-w-[350px]">
-      <div class="md:sticky md:top-[62px]">
-        <div class="hover-scroll-bar h-[calc(100vh-62px)] overflow-y-auto px-4 md:px-6 lg:px-8">
-          <DarkSouls />
-        </div>
-      </div>
-    </aside>
-    <div class="order-1 flex-auto px-4 md:order-2 md:w-8/12 lg:px-8">
-      <div class="flex flex-col sm:-mx-6 md:flex-row">
-        <div class="mt-4 px-4 md:w-full lg:w-8/12">
-          <template v-for="(arr, idx) in articleBuckets" :key="idx">
-            <div>
-              <DarkArticleCard
-                v-for="item in arr"
-                :key="item.id"
-                :item="item"
-              />
-            </div>
-          </template>
-          <button
-            v-if="hasMore"
-            class="mt-6 inline-flex items-center rounded-md border border-border-muted px-4 py-2 text-sm font-medium text-fg-default transition hover:bg-border-muted/20 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="btnLoading"
-            @click="next"
-          >
-            {{ btnText }}
-          </button>
-          <div class="my-8">
-            <SidebarFooter />
-          </div>
-        </div>
-        <div class="mt-8 max-w-full md:w-4/12 md:px-6">
-          <CommentArea />
-        </div>
-      </div>
+  <main class="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 py-10">
+    <header class="flex flex-col gap-2 text-center">
+      <h1 class="text-3xl font-bold text-fg-default">
+        icebreaker.top
+      </h1>
+      <p class="text-sm text-fg-muted">
+        记录与分享 —— 最新文章列表
+      </p>
+    </header>
+
+    <div v-if="pending" class="text-center text-sm text-fg-muted">
+      正在加载文章…
     </div>
-  </div>
+
+    <div v-else-if="error" class="text-center text-sm text-red-500">
+      加载失败，请稍后重试。
+    </div>
+
+    <section v-else class="flex flex-col gap-4">
+      <ArticleCard v-for="article in data || []" :key="article.path" :article="article" />
+      <p v-if="(data?.length || 0) === 0" class="text-center text-sm text-fg-muted">
+        暂无文章。
+      </p>
+    </section>
+
+    <footer class="mt-10 flex items-center justify-center text-xs text-fg-muted">
+      <button
+        class="rounded-md border border-border-muted px-3 py-2 transition hover:bg-border-muted/20"
+        type="button"
+        @click="refresh"
+      >
+        刷新列表
+      </button>
+    </footer>
+  </main>
 </template>

@@ -35,62 +35,29 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: '我的技术展示_icebreaker_某某打字员_擅长批量生产邮件_文档和代码',
-      htmlAttrs: {
-        lang: 'zh-CN',
-      },
+      htmlAttrs: { lang: 'zh-CN' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { 'http-equiv': 'X-UA-Compatible', 'content': 'IE=edge, chrome=1' },
         { name: 'description', content: '' },
       ],
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      ],
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
       script: analyticsScripts,
-      noscript: [
-        { children: '此页面需要javascript支持,请在浏览器中启用javascript' },
-      ],
+      noscript: [{ children: '此页面需要javascript支持,请在浏览器中启用javascript' }],
     },
   },
-  css: [
-    '@fortawesome/fontawesome-svg-core/styles.css',
-    '@/assets/css/tailwind.css',
-  ],
-  components: [
-    { path: '@/components', pathPrefix: false },
-    { path: '@/components/global', global: true, pathPrefix: false },
-  ],
-  vue: {
-    compilerOptions: {
-      isCustomElement: tag => tag === 'giscus-widget',
-    },
-  },
-  modules: [
-    '@pinia/nuxt',
-    '@nuxt/content',
-    '@vueuse/nuxt',
-    '@nuxtjs/sitemap',
-  ],
+  css: ['@/assets/css/tailwind.css'],
+  components: [{ path: '@/components', pathPrefix: false }],
+  modules: ['@nuxt/content'],
   alias: {
     '@': path.resolve(__dirname, 'app'),
     '~': path.resolve(__dirname, 'app'),
-    '#content/server': path.resolve(__dirname, 'node_modules/@nuxt/content/dist/runtime/server.js'),
   },
   runtimeConfig: {
     public: {
       siteUrl,
       release: isRelease,
-    },
-  },
-  sitemap: {
-    site: {
-      url: siteUrl,
-    },
-    cacheMaxAge: 60 * 60 * 2,
-    defaults: {
-      changefreq: 'daily',
-      priority: 1,
     },
   },
   content: {
@@ -106,12 +73,6 @@ export default defineNuxtConfig({
       },
     },
   },
-  nitro: {
-    prerender: {
-      crawlLinks: true,
-      routes: ['/rss.xml', '/feed.json'],
-    },
-  },
   hooks: {
     'content:file:afterParse': ({ collection, file, content }) => {
       if (collection.name !== 'articles') {
@@ -125,13 +86,15 @@ export default defineNuxtConfig({
       content.readingWords = words
     },
   },
-  imports: {
-    dirs: ['composables', 'stores'],
+  vite: {
+    css: {
+      devSourcemap: false,
+    },
   },
   postcss: {
     plugins: {
       '@tailwindcss/postcss': {},
-      'autoprefixer': {},
+      autoprefixer: {},
     },
   },
 })
