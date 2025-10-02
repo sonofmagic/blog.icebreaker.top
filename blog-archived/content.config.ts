@@ -2,7 +2,12 @@ import { defineCollection, defineContentConfig, z } from '@nuxt/content'
 
 const articles = defineCollection({
   type: 'page',
-  source: 'articles/**/*.md',
+  source: [
+    {
+      include: 'articles/**/*.md',
+      exclude: ['articles/**/.*.md'],
+    },
+  ],
   schema: z.object({
     title: z.string().optional(),
     description: z.string().optional(),
