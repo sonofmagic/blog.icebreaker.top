@@ -11,8 +11,6 @@ export default defineNuxtConfig({
   },
   css: ['@/assets/css/tailwind.css'],
   modules: [
-    '@nuxt/ui',
-    '@nuxt/content',
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/scripts',
@@ -20,6 +18,8 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
+    '@nuxt/ui',
+    '@nuxt/content',
   ],
   colorMode: {
     preference: 'dark',
@@ -29,8 +29,8 @@ export default defineNuxtConfig({
     classPrefix: '',
     storageKey: 'icebreakers-theme',
     modes: {
-      'light': 'light',
-      'dark': 'dark',
+      light: 'light',
+      dark: 'dark',
     },
   },
   vite: {

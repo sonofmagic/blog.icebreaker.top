@@ -17,7 +17,7 @@ const props = defineProps<{ article: ArticleSummary }>()
     variant="ghost"
     class="app-card h-full rounded-2xl p-5 transition hover:-translate-y-1"
   >
-    <UStack :gap="3">
+    <div class="flex flex-col gap-3">
       <div class="flex flex-col gap-1">
         <ULink
           :to="props.article.path"
@@ -58,6 +58,6 @@ const props = defineProps<{ article: ArticleSummary }>()
           {{ tag }}
         </UBadge>
       </div>
-    </UStack>
+    </div>
   </UCard>
 </template>

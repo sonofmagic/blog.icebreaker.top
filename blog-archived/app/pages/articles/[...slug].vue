@@ -62,9 +62,9 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
           <UBadge variant="soft" color="primary">
             精选文章
           </UBadge>
-          <UHeading tag="h1" size="xl" weight="semibold" class="tracking-tight">
+          <h1 class="text-3xl font-semibold tracking-tight">
             {{ article.title || '未命名文章' }}
-          </UHeading>
+          </h1>
           <p v-if="article.description" class="text-sm text-muted">
             {{ article.description }}
           </p>

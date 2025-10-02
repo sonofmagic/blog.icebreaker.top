@@ -2,6 +2,10 @@
 import { computed } from 'vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 
+definePageMeta({
+  alias: ['/articles'],
+})
+
 function parseMeta(entry: Record<string, any>) {
   if (typeof entry.meta === 'string') {
     try {
@@ -45,12 +49,20 @@ const articleCount = computed(() => articles.value.length)
 </script>
 
 <template>
-  <UStack gap="6">
+  <div class="flex flex-col gap-6">
     <header class="app-card-soft space-y-2 rounded-3xl p-6 text-muted">
-      <UBadge variant="soft" color="primary">All posts</UBadge>
-      <UHeading tag="h1" size="xl" weight="semibold" class="text-muted-strong">全部文章</UHeading>
-      <p class="text-sm">按时间倒序排列，方便从最新开始阅读。</p>
-      <p class="text-xs">目前共 {{ articleCount }} 篇。</p>
+      <UBadge variant="soft" color="primary">
+        All posts
+      </UBadge>
+      <h1 class="text-muted-strong text-3xl font-semibold tracking-tight">
+        全部文章
+      </h1>
+      <p class="text-sm">
+        按时间倒序排列，方便从最新开始阅读。
+      </p>
+      <p class="text-xs">
+        目前共 {{ articleCount }} 篇。
+      </p>
     </header>
 
     <UCard variant="ghost" class="app-card rounded-3xl p-6">
@@ -60,7 +72,9 @@ const articleCount = computed(() => articles.value.length)
             <span class="flex size-9 items-center justify-center rounded-full bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]">
               <UIcon name="i-lucide-align-left" class="size-4" />
             </span>
-            <UHeading tag="h2" size="sm" weight="medium">文章列表</UHeading>
+            <h2 class="text-sm font-medium tracking-normal">
+              文章列表
+            </h2>
           </div>
           <UButton variant="ghost" icon="i-lucide-refresh-ccw" class="rounded-full border border-transparent px-4" @click="refresh">
             刷新
@@ -95,5 +109,5 @@ const articleCount = computed(() => articles.value.length)
         </template>
       </div>
     </UCard>
-  </UStack>
+  </div>
 </template>

@@ -9,8 +9,8 @@ const navLinks = [
 ] as const
 
 const profileLinks = [
-  { label: 'GitHub', href: 'https://github.com/innno', icon: 'i-lucide-github' },
-  { label: 'Twitter', href: 'https://twitter.com/', icon: 'i-lucide-twitter' },
+  { label: 'GitHub', href: 'https://github.com/sonofmagic', icon: 'i-lucide-github' },
+  { label: 'Twitter', href: 'https://x.com/sonofmagic95', icon: 'i-lucide-twitter' },
 ]
 
 function isActiveLink(path: string) {

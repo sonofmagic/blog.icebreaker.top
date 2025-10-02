@@ -32,44 +32,61 @@ function setMode(key: ModeKey) {
   colorMode.preference = key
   colorMode.value = key
 }
+
+function onSelectChange(event: Event) {
+  const target = event.target as HTMLSelectElement | null
+  const next = target?.value as ModeKey | undefined
+  if (next) {
+    setMode(next)
+  }
+}
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <UButtonGroup v-if="isMounted" size="sm" class="hidden md:inline-flex">
-      <UTooltip v-for="mode in modes" :key="mode.key" :text="`${mode.label} · ${mode.description}`">
-        <UButton
-          :aria-label="`切换为${mode.label}主题`"
-          :aria-pressed="activeKey === mode.key"
-          :variant="activeKey === mode.key ? 'solid' : 'ghost'"
-          :color="activeKey === mode.key ? 'primary' : 'neutral'"
-          :icon="mode.icon"
-          class="gap-1"
-          @click="setMode(mode.key)"
-        >
-          <span class="hidden text-xs font-medium sm:inline">{{ mode.label }}</span>
-        </UButton>
-      </UTooltip>
-    </UButtonGroup>
+    <div v-if="isMounted" class="hidden items-center gap-2 md:inline-flex">
+      <UButton
+        v-for="mode in modes"
+        :key="mode.key"
+        :title="`${mode.label} · ${mode.description}`"
+        :aria-label="`切换为${mode.label}主题`"
+        :aria-pressed="activeKey === mode.key"
+        :variant="activeKey === mode.key ? 'solid' : 'ghost'"
+        :color="activeKey === mode.key ? 'primary' : 'neutral'"
+        :icon="mode.icon"
+        size="sm"
+        class="gap-1"
+        @click="setMode(mode.key)"
+      >
+        <span class="hidden text-xs font-medium sm:inline">{{ mode.label }}</span>
+      </UButton>
+    </div>
 
-    <UTooltip v-else text="主题切换">
-      <UButton icon="i-lucide-cloud-moon" variant="ghost" color="neutral" size="sm" aria-label="在客户端渲染后启用主题切换" />
-    </UTooltip>
+    <div v-else>
+      <UButton
+        icon="i-lucide-cloud-moon"
+        variant="ghost"
+        color="neutral"
+        size="sm"
+        aria-label="在客户端渲染后启用主题切换"
+        title="主题切换"
+      />
+    </div>
 
-    <UDropdown
+    <select
       v-if="isMounted"
-      :items="[
-        [
-          ...modes.map(mode => ({
-            label: mode.label,
-            description: activeKey === mode.key ? '当前主题' : mode.description,
-            icon: mode.icon,
-            click: () => setMode(mode.key),
-          })),
-        ],
-      ]"
+      :value="activeKey"
+      class="md:hidden rounded-full border border-[--surface-border] bg-transparent px-3 py-1 text-xs text-muted"
+      aria-label="选择主题"
+      @change="onSelectChange"
     >
-      <UButton icon="i-lucide-ellipsis" variant="ghost" color="neutral" size="sm" aria-label="展开主题切换菜单" />
-    </UDropdown>
+      <option
+        v-for="mode in modes"
+        :key="mode.key"
+        :value="mode.key"
+      >
+        {{ mode.label }}
+      </option>
+    </select>
   </div>
 </template>
