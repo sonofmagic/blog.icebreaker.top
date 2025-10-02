@@ -20,7 +20,6 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
-
   ],
   colorMode: {
     preference: 'soft-dark',
@@ -30,9 +29,8 @@ export default defineNuxtConfig({
     classPrefix: '',
     storageKey: 'icebreakers-theme',
     modes: {
-      'soft-dark': 'soft-dark',
-      'dark': 'dark',
       'light': 'light',
+      'soft-dark': 'soft-dark',
     },
   },
   vite: {

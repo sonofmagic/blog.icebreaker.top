@@ -51,7 +51,7 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
 </script>
 
 <template>
-  <UStack gap="6">
+  <div>
     <UButton to="/" variant="ghost" icon="i-lucide-arrow-left" class="w-fit rounded-full border border-transparent px-4">
       返回首页
     </UButton>
@@ -59,7 +59,9 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
     <UCard v-if="article" variant="ghost" class="app-card rounded-3xl p-6 md:p-8">
       <template #header>
         <div class="space-y-4">
-          <UBadge variant="soft" color="primary">精选文章</UBadge>
+          <UBadge variant="soft" color="primary">
+            精选文章
+          </UBadge>
           <UHeading tag="h1" size="xl" weight="semibold" class="tracking-tight">
             {{ article.title || '未命名文章' }}
           </UHeading>
@@ -96,13 +98,11 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
         </div>
       </template>
 
-      <UProse>
-        <ContentRenderer :value="article" />
-      </UProse>
+      <ContentRenderer :value="article" />
     </UCard>
 
     <UAlert v-else color="primary" variant="soft" icon="i-lucide-loader-2" class="animate-pulse">
       正在加载文章…
     </UAlert>
-  </UStack>
+  </div>
 </template>

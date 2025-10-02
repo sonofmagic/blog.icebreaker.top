@@ -17,15 +17,6 @@ const nowItems = [
   { label: '为 blog 做一些样式实验。' },
 ]
 
-const footprintItems = [
-  { label: 'Notion', icon: 'i-simple-icons-notion', description: '记录阅读摘录与旅行计划' },
-  { label: 'Spotify', icon: 'i-simple-icons-spotify', description: '循环播放 chillhop 与 city pop' },
-  { label: '豆瓣', icon: 'i-simple-icons-douban', description: '写影评，追踪想看的书和电影' },
-  { label: 'Nuxt', icon: 'i-simple-icons-nuxt', description: '这个站点基于 Nuxt 4 打造' },
-  { label: 'Figma', icon: 'i-simple-icons-figma', description: '快节奏产出轻量原型' },
-  { label: 'Telegram', icon: 'i-simple-icons-telegram', description: '偶尔在频道里更新碎碎念' },
-]
-
 function parseMeta(entry: Record<string, any>) {
   if (typeof entry.meta === 'string') {
     try {
@@ -75,9 +66,9 @@ const hasArticles = computed(() => recentArticles.value.length > 0)
       <template #header>
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div class="space-y-3">
-            <UHeading tag="h1" size="xl" weight="semibold" class="tracking-tight">我是 icebreaker</UHeading>
+            <UHeading tag="h1" size="xl" weight="semibold" class="tracking-tight">你好，我是 icebreaker</UHeading>
             <p class="max-w-2xl text-sm text-muted">
-              喜欢写字、记录身边的小事，也偶尔分享一些技术实验。这个角落更像一本随笔本，慢慢累积生活与灵感的碎片。
+              我在这里写下真实的日常、折腾的作品，以及那些不想弄丢的瞬间。希望这些文字能成为自己与世界对话的方式，也能在你需要的时候，带来一点安静与陪伴。
             </p>
           </div>
           <div class="relative">
@@ -120,35 +111,15 @@ const hasArticles = computed(() => recentArticles.value.length > 0)
       </div>
     </UCard>
 
-    <UCard variant="ghost" class="app-card rounded-3xl p-6">
-      <template #header>
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <span class="flex size-9 items-center justify-center rounded-full bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]">
-              <UIcon name="i-lucide-globe-2" class="size-4" />
-            </span>
-            <UHeading tag="h2" size="md" weight="semibold">这些地方也常去</UHeading>
-          </div>
-          <UBadge color="primary" variant="soft" class="uppercase tracking-wide">足迹</UBadge>
-        </div>
-      </template>
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <UCard
-          v-for="item in footprintItems"
-          :key="item.label"
-          variant="ghost"
-          class="app-card-soft rounded-2xl p-4 transition hover:-translate-y-1 hover:border-[--surface-border-strong]"
-        >
-          <div class="flex items-start gap-3">
-            <UIcon :name="item.icon" class="size-7 text-[--gh-accent-emphasis]" />
-            <div>
-              <p class="font-medium text-muted-strong">{{ item.label }}</p>
-              <p class="text-sm text-muted">{{ item.description }}</p>
-            </div>
-          </div>
-        </UCard>
+    <div class="rounded-3xl border border-dashed border-[--surface-border] bg-[--panel-bg-soft] p-6 text-sm text-muted shadow-[0_18px_40px_-28px_var(--glow-primary)]">
+      <div class="flex flex-wrap items-center gap-2 text-[0.7rem] uppercase tracking-[0.35em] text-[--gh-accent-emphasis]">
+        <UIcon name="i-lucide-stars" class="size-4" />
+        <span>signal</span>
       </div>
-    </UCard>
+      <p class="mt-3 leading-relaxed text-muted">
+        写博客对我来说像是一项长期的修复工程：修复记忆、修复表达，也修复自己面对世界时的勇气。如果你读到了某个瞬间，也欢迎把你的故事发给我。
+      </p>
+    </div>
 
     <UCard variant="ghost" class="app-card rounded-3xl p-6">
       <template #header>
@@ -208,11 +179,11 @@ const hasArticles = computed(() => recentArticles.value.length > 0)
           <UHeading tag="h2" size="md" weight="semibold">关于这个小站</UHeading>
         </div>
       </template>
-      <UProse class="text-sm text-muted">
+      <div class="prose prose-sm text-muted">
         <p>
           这里的文章大多记录针对生活、旅行、阅读的感受，也会偶尔写一点技术随笔。没有固定的更新节奏，只在灵感出现或心情平静时动笔。如果你有共鸣，欢迎写信给我。
         </p>
-      </UProse>
+      </div>
     </UCard>
   </UStack>
 </template>

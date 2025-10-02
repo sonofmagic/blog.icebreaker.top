@@ -4,9 +4,8 @@ import { computed, onMounted, ref } from 'vue'
 const colorMode = useColorMode()
 
 const modes = [
-  { key: 'light', label: '浅色', description: '日间阅读', icon: 'i-lucide-sun' },
-  { key: 'soft-dark', label: '柔和', description: '柔和夜间', icon: 'i-lucide-cloud-moon' },
-  { key: 'dark', label: '深色', description: '完全暗黑', icon: 'i-lucide-moon-star' },
+  { key: 'light', label: '亮色', description: 'GitHub Light Default', icon: 'i-lucide-sun' },
+  { key: 'soft-dark', label: '柔和暗色', description: 'GitHub Dark Soft', icon: 'i-lucide-moon-star' },
 ] as const
 
 type ModeKey = typeof modes[number]['key']

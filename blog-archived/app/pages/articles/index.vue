@@ -46,7 +46,7 @@ const articleCount = computed(() => articles.value.length)
 
 <template>
   <UStack gap="6">
-    <header class="space-y-2 rounded-3xl bg-[--panel-bg] p-6 text-muted">
+    <header class="app-card-soft space-y-2 rounded-3xl p-6 text-muted">
       <UBadge variant="soft" color="primary">All posts</UBadge>
       <UHeading tag="h1" size="xl" weight="semibold" class="text-muted-strong">文章总览</UHeading>
       <p class="text-sm">这些笔记按时间倒序排好，方便沿着时间线回看当时的想法。</p>
