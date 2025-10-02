@@ -10,14 +10,16 @@ export default defineNuxtConfig({
     port: 9000,
   },
   css: ['@/assets/css/tailwind.css'],
-  modules: ['@nuxt/content'],
-  content: {
-    markdown: {
-      toc: {
-        depth: 3,
-      },
-    },
-  },
+  modules: [
+    '@nuxt/eslint',
+    '@nuxt/image',
+    '@nuxt/scripts',
+    '@nuxt/test-utils',
+    '@nuxt/icon',
+    '@nuxt/fonts',
+    '@nuxtjs/color-mode',
+    '@nuxt/content',
+  ],
   vite: {
     css: {
       devSourcemap: false,

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { queryCollection } from '#imports'
-
 const route = useRoute()
 const slugParam = route.params.slug
 const slugSegments = Array.isArray(slugParam) ? slugParam : [slugParam].filter(Boolean)

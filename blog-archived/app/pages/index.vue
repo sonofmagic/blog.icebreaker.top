@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { queryCollection } from '#imports'
 import ArticleCard from '@/components/ArticleCard.vue'
 
 const PAGE_SIZE = 20
