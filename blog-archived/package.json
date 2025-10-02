@@ -17,7 +17,7 @@
     "sync": "node scripts/syncArticles.js",
     "analyze": "cross-env NODE_ENV=production SLS_ENV=release NUXT_BUILD_ANALYZE=1 nuxt build",
     "check:upgrade": "pnpm dlx nuxi upgrade",
-    "format": "prettier client/**/*.vue",
+    "format": "prettier app/**/*.vue",
     "prepare": "nuxt prepare",
     "test": "vitest",
     "postinstall": "nuxt prepare"

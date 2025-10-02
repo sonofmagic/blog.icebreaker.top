@@ -7,7 +7,7 @@ import readingTime from 'reading-time'
 
 const isProd = process.env.NODE_ENV === 'production'
 const isRelease = process.env.SLS_ENV === 'release'
-const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://blog.icebreaker.top'
+const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.icebreaker.top'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -28,7 +28,6 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
-  srcDir: 'client',
   telemetry: false,
   devServer: {
     port: 9000,
@@ -73,6 +72,11 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxtjs/sitemap',
   ],
+  alias: {
+    '@': path.resolve(__dirname, 'app'),
+    '~': path.resolve(__dirname, 'app'),
+    '#content/server': path.resolve(__dirname, 'node_modules/@nuxt/content/dist/runtime/server.js'),
+  },
   runtimeConfig: {
     public: {
       siteUrl,
