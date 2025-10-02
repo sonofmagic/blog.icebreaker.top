@@ -22,15 +22,15 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
   ],
   colorMode: {
-    preference: 'soft-dark',
-    fallback: 'soft-dark',
+    preference: 'dark',
+    fallback: 'dark',
     dataValue: 'theme',
     classSuffix: '',
     classPrefix: '',
     storageKey: 'icebreakers-theme',
     modes: {
       'light': 'light',
-      'soft-dark': 'soft-dark',
+      'dark': 'dark',
     },
   },
   vite: {

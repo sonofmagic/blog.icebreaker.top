@@ -5,7 +5,7 @@ const colorMode = useColorMode()
 
 const modes = [
   { key: 'light', label: '亮色', description: 'GitHub Light Default', icon: 'i-lucide-sun' },
-  { key: 'soft-dark', label: '柔和暗色', description: 'GitHub Dark Soft', icon: 'i-lucide-moon-star' },
+  { key: 'dark', label: '柔和暗色', description: 'GitHub Dark Soft', icon: 'i-lucide-moon-star' },
 ] as const
 
 type ModeKey = typeof modes[number]['key']
@@ -25,7 +25,7 @@ const activeKey = computed<ModeKey>(() => {
   if (preference && modes.some(mode => mode.key === preference)) {
     return preference
   }
-  return 'soft-dark'
+  return 'dark'
 })
 
 function setMode(key: ModeKey) {

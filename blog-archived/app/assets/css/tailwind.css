@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
-@custom-variant dark (&:where(html[data-theme='soft-dark'] &));
+@custom-variant dark (&:where(html[data-theme='dark'] &));
 
 @layer base {
   html {
@@ -89,7 +89,7 @@
     --card-glass-overlay: rgba(255, 255, 255, 0.65);
   }
 
-  html[data-theme='soft-dark'] {
+  html[data-theme='dark'] {
     color-scheme: dark;
     --gh-canvas-default: #22272e;
     --gh-canvas-subtle: #1c2128;
