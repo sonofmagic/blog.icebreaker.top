@@ -13,27 +13,42 @@ const props = defineProps<{ article: ArticleSummary }>()
 </script>
 
 <template>
-  <article class="rounded-lg border border-border-muted bg-canvas-default p-4 shadow-sm transition hover:shadow-md">
-    <h2 class="text-lg font-semibold text-fg-default">
-      <NuxtLink :to="article.path" class="hover:underline">
-        {{ article.title }}
-      </NuxtLink>
-    </h2>
-    <p v-if="article.description" class="mt-2 text-sm text-fg-muted">
-      {{ article.description }}
-    </p>
-    <div class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-fg-muted">
-      <span v-if="article.date">发表于 {{ article.date }}</span>
-      <span v-if="article.readingMinutes">约 {{ article.readingMinutes }} 分钟</span>
-      <span v-if="article.readingWords">共 {{ article.readingWords }} 字</span>
+  <article class="rounded-xl border border-border-muted bg-canvas-default p-5 shadow-card transition hover:border-border-default hover:shadow-card-hover">
+    <header class="flex flex-col gap-2">
+      <h2 class="text-xl font-semibold text-fg-default">
+        <NuxtLink :to="props.article.path" class="flex items-center gap-2 text-inherit hover:text-accent-emphasis">
+          <Icon name="line-md:text-box" class="h-4 w-4 text-fg-muted" />
+          <span>{{ props.article.title }}</span>
+        </NuxtLink>
+      </h2>
+      <p v-if="props.article.description" class="text-sm leading-relaxed text-fg-muted">
+        {{ props.article.description }}
+      </p>
+    </header>
+
+    <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-fg-subtle">
+      <span v-if="props.article.date" class="inline-flex items-center gap-1">
+        <Icon name="line-md:calendar" class="h-3.5 w-3.5" />
+        <span>发表于 {{ props.article.date }}</span>
+      </span>
+      <span v-if="props.article.readingMinutes" class="inline-flex items-center gap-1">
+        <Icon name="line-md:document" class="h-3.5 w-3.5" />
+        <span>约 {{ props.article.readingMinutes }} 分钟</span>
+      </span>
+      <span v-if="props.article.readingWords" class="inline-flex items-center gap-1">
+        <Icon name="line-md:clipboard" class="h-3.5 w-3.5" />
+        <span>共 {{ props.article.readingWords }} 字</span>
+      </span>
     </div>
-    <div v-if="article.tags.length" class="mt-3 flex flex-wrap gap-2">
+
+    <div v-if="props.article.tags.length" class="mt-4 flex flex-wrap gap-2">
       <span
-        v-for="tag in article.tags"
+        v-for="tag in props.article.tags"
         :key="tag"
-        class="rounded-full bg-accent-subtle px-2 py-0.5 text-xs text-accent-emphasis"
+        class="inline-flex items-center gap-1 rounded-full border border-border-muted bg-accent-subtle px-2.5 py-1 text-xs font-medium text-accent-emphasis"
       >
-        {{ tag }}
+        <Icon name="line-md:hash" class="h-3 w-3" />
+        <span>{{ tag }}</span>
       </span>
     </div>
   </article>

@@ -20,6 +20,18 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@nuxt/content',
   ],
+  colorMode: {
+    preference: 'soft-dark',
+    fallback: 'soft-dark',
+    dataValue: 'theme',
+    classSuffix: '',
+    classPrefix: '',
+    storageKey: 'icebreakers-theme',
+    modes: {
+      'soft-dark': 'soft-dark',
+      'light': 'light',
+    },
+  },
   vite: {
     css: {
       devSourcemap: false,
@@ -29,6 +41,21 @@ export default defineNuxtConfig({
     plugins: {
       '@tailwindcss/postcss': {},
       'autoprefixer': {},
+    },
+  },
+  content: {
+    highlight: {
+      preload: ['ts', 'js', 'json', 'bash', 'yaml', 'vue', 'md', 'html', 'css'],
+      highlighter: {
+        name: 'shiki',
+        options: {
+          themes: {
+            default: 'github-dark-dimmed',
+            dark: 'github-dark-dimmed',
+            light: 'github-light',
+          },
+        },
+      },
     },
   },
 })
