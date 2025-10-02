@@ -4,9 +4,24 @@ import ArticleCard from '@/components/ArticleCard.vue'
 
 const PAGE_SIZE = 20
 
+function parseMeta(entry: Record<string, any>) {
+  if (typeof entry.meta === 'string') {
+    try {
+      return JSON.parse(entry.meta) as Record<string, any>
+    }
+    catch {
+      return {}
+    }
+  }
+  if (entry.meta && typeof entry.meta === 'object') {
+    return entry.meta as Record<string, any>
+  }
+  return {}
+}
+
 function mapToSummary(entry: Record<string, any>) {
   return {
-    path: (typeof entry.path === 'string' && entry.path) || (typeof entry._path === 'string' && entry._path) || '/',
+    path: (typeof entry.path === 'string' && entry.path) || '/',
     title: typeof entry.title === 'string' && entry.title.length > 0 ? entry.title : 'Untitled',
     description: typeof entry.description === 'string' ? entry.description : undefined,
     date: typeof entry.date === 'string' ? entry.date : undefined,
@@ -17,17 +32,15 @@ function mapToSummary(entry: Record<string, any>) {
 }
 
 const { data, pending, error, refresh } = await useAsyncData('articles:index', async () => {
-  const entries = await queryCollection('articles')
-    .andWhere(group =>
-      group
-        .where('draft', 'IS NULL')
-        .orWhere(orGroup => orGroup.where('draft', '<>', true)),
-    )
-    .order('date', 'DESC')
-    .limit(PAGE_SIZE)
-    .all()
+  const entries = await queryCollection('articles').all()
+  const articleEntries = Array.isArray(entries) ? entries : []
 
-  return entries.map(mapToSummary)
+  return articleEntries
+    .map(entry => ({ ...entry, ...parseMeta(entry) }))
+    .filter(entry => entry.draft !== true)
+    .sort((a, b) => new Date(b.date ?? '').getTime() - new Date(a.date ?? '').getTime())
+    .slice(0, PAGE_SIZE)
+    .map(mapToSummary)
 })
 </script>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { queryCollection } from '#imports'
+
 const route = useRoute()
 const slugParam = route.params.slug
 const slugSegments = Array.isArray(slugParam) ? slugParam : [slugParam].filter(Boolean)
@@ -10,12 +11,44 @@ if (!contentPath) {
   throw createError({ statusCode: 404, statusMessage: '文章不存在' })
 }
 
+function parseMeta(entry: Record<string, any>) {
+  if (typeof entry.meta === 'string') {
+    try {
+      return JSON.parse(entry.meta) as Record<string, any>
+    }
+    catch {
+      return {}
+    }
+  }
+  if (entry.meta && typeof entry.meta === 'object') {
+    return entry.meta as Record<string, any>
+  }
+  return {}
+}
+
 const { data: article } = await useAsyncData(`article:${contentPath}`, async () => {
-  const entry = await queryCollection('articles').path(contentPath).first()
+  const entry = await queryCollection('articles')
+    .select('id', 'title', 'description', 'path', 'body', 'meta')
+    .path(contentPath)
+    .first()
   if (!entry) {
     throw createError({ statusCode: 404, statusMessage: '文章不存在' })
   }
-  return entry
+  const meta = parseMeta(entry)
+  let body = entry.body
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body)
+    }
+    catch {
+      body = null
+    }
+  }
+  return {
+    ...entry,
+    ...meta,
+    body,
+  }
 })
 </script>
 
