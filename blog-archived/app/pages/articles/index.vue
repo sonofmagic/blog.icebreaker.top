@@ -46,23 +46,30 @@ const articleCount = computed(() => articles.value.length)
 
 <template>
   <UStack gap="6">
-    <header class="space-y-2">
+    <header class="space-y-2 rounded-3xl bg-[--panel-bg] p-6 text-muted">
       <UBadge variant="soft" color="primary">All posts</UBadge>
-      <UHeading tag="h1" size="xl" weight="semibold">文章总览</UHeading>
-      <p class="text-sm text-muted">这些笔记按时间倒序排好，方便沿着时间线回看当时的想法。</p>
-      <p class="text-xs text-muted">目前共 {{ articleCount }} 篇。</p>
+      <UHeading tag="h1" size="xl" weight="semibold" class="text-muted-strong">文章总览</UHeading>
+      <p class="text-sm">这些笔记按时间倒序排好，方便沿着时间线回看当时的想法。</p>
+      <p class="text-xs">目前共 {{ articleCount }} 篇。</p>
     </header>
 
-    <UCard variant="ghost" class="border border-[--gh-border-default] shadow-sm">
+    <UCard variant="ghost" class="app-card rounded-3xl p-6">
       <template #header>
-        <div class="flex items-center justify-between">
-          <UHeading tag="h2" size="sm" weight="medium">文章列表</UHeading>
-          <UButton variant="ghost" icon="i-lucide-refresh-ccw" @click="refresh">刷新</UButton>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-muted-strong">
+            <span class="flex size-9 items-center justify-center rounded-full bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]">
+              <UIcon name="i-lucide-archive" class="size-4" />
+            </span>
+            <UHeading tag="h2" size="sm" weight="medium">文章列表</UHeading>
+          </div>
+          <UButton variant="ghost" icon="i-lucide-refresh-ccw" class="rounded-full border border-transparent px-4" @click="refresh">
+            刷新
+          </UButton>
         </div>
       </template>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UCard v-if="pending" variant="ghost" class="col-span-full border border-dashed border-[--gh-border-default] bg-[--gh-canvas-inset] text-center text-sm text-muted">
+        <UCard v-if="pending" variant="ghost" class="app-placeholder col-span-full rounded-2xl p-6 text-center text-sm">
           正在加载，请稍候。
         </UCard>
 
@@ -82,7 +89,7 @@ const articleCount = computed(() => articles.value.length)
             :key="article.path"
             :article="article"
           />
-          <UCard v-if="articles.length === 0" variant="ghost" class="col-span-full border border-dashed border-[--gh-border-default] bg-[--gh-canvas-inset] text-center text-sm text-muted">
+          <UCard v-if="articles.length === 0" variant="ghost" class="app-placeholder col-span-full rounded-2xl p-6 text-center text-sm">
             暂无内容，敬请期待后续更新。
           </UCard>
         </template>

@@ -11,6 +11,8 @@ export default defineNuxtConfig({
   },
   css: ['@/assets/css/tailwind.css'],
   modules: [
+    '@nuxt/ui',
+    '@nuxt/content',
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/scripts',
@@ -18,8 +20,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
-    '@nuxt/content',
-    '@nuxt/ui',
+
   ],
   colorMode: {
     preference: 'soft-dark',

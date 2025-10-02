@@ -52,15 +52,15 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
 
 <template>
   <UStack gap="6">
-    <UButton to="/" variant="ghost" icon="i-lucide-arrow-left">
+    <UButton to="/" variant="ghost" icon="i-lucide-arrow-left" class="w-fit rounded-full border border-transparent px-4">
       返回首页
     </UButton>
 
-    <UCard v-if="article" variant="ghost" class="border border-[--gh-border-default] shadow-sm">
+    <UCard v-if="article" variant="ghost" class="app-card rounded-3xl p-6 md:p-8">
       <template #header>
-        <div class="space-y-3">
+        <div class="space-y-4">
           <UBadge variant="soft" color="primary">精选文章</UBadge>
-          <UHeading tag="h1" size="xl" weight="semibold">
+          <UHeading tag="h1" size="xl" weight="semibold" class="tracking-tight">
             {{ article.title || '未命名文章' }}
           </UHeading>
           <p v-if="article.description" class="text-sm text-muted">

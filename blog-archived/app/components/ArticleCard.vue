@@ -13,11 +13,17 @@ const props = defineProps<{ article: ArticleSummary }>()
 </script>
 
 <template>
-  <UCard variant="ghost" class="h-full border border-[--gh-border-default] bg-[--gh-canvas-default] transition hover:border-[--gh-accent-emphasis]">
+  <UCard
+    variant="ghost"
+    class="app-card h-full rounded-2xl p-5 transition hover:-translate-y-1"
+  >
     <UStack :gap="3">
       <div class="flex flex-col gap-1">
-        <ULink :to="props.article.path" class="flex items-center gap-2 text-base font-semibold text-foreground hover:text-primary">
-          <UIcon name="i-lucide-file-text" class="size-4 text-muted" />
+        <ULink
+          :to="props.article.path"
+          class="flex items-center gap-2 text-base font-semibold text-muted-strong transition hover:text-[--gh-accent-emphasis]"
+        >
+          <UIcon name="i-lucide-file-text" class="size-4 text-[--gh-accent-emphasis]" />
           {{ props.article.title }}
         </ULink>
         <p v-if="props.article.description" class="text-sm text-muted">
@@ -46,7 +52,7 @@ const props = defineProps<{ article: ArticleSummary }>()
           :key="tag"
           variant="soft"
           size="sm"
-          class="gap-1"
+          class="gap-1 bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]"
         >
           <UIcon name="i-lucide-hash" class="size-3" />
           {{ tag }}
