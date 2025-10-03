@@ -23,7 +23,7 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@nuxt/ui',
     '@nuxt/content',
-    '@nuxtjs/sitemap',
+    '@nuxtjs/seo',
   ],
   colorMode: {
     preference: 'dark',
@@ -81,9 +81,11 @@ export default defineNuxtConfig({
       ],
     },
   },
-  sitemap: {
-    siteUrl: SITE_URL,
-    autoLastmod: true,
+  seo: {
+
+  },
+  site: {
+
   },
   // nitro: {
   //   preset: 'cloudflare-pages',
