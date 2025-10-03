@@ -1,21 +1,19 @@
 # Repository Guidelines
 
-Icebreaker.top is a pnpm-managed monorepo that targets Node 20. Start by updating main (`git pull origin main --ff-only`) and reviewing existing automation scripts before you branch off.
-
 ## Project Structure & Module Organization
-`blog-archived/` contains the Nuxt 2 client under `client/`, shared fixtures in `fixtures/`, and helper utilities in `scripts/`. Long-form content lives in `article/content/` with supporting automation in `article/scripts/` and `article/actions/`. New front-end apps belong in `apps/*`; share reusable code in `packages/*` so Turbo tasks and Vitest detect them. Root configs such as `turbo.json`, `eslint.config.js`, and `monorepo.config.ts` coordinate workspace wiring—extend them when new workspaces appear.
+Icebreaker.top is a pnpm-managed monorepo targeting Node 20. Front-end apps live under `apps/`, shared libraries in `packages/`, and the legacy Nuxt 2 client sits in `blog-archived/client/`. Long-form content appears in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate tests beside source files (for example, `blog-archived/fixtures/userList.test.ts`) and keep automation utilities in `blog-archived/scripts/`.
 
 ## Build, Test, and Development Commands
-Run `pnpm install` to respect the enforced preinstall hook; do not substitute npm or yarn. Use `pnpm dev` (or `pnpm dev --filter @icebreakers/blog-archived`) for local development. `pnpm build` produces production bundles aligned with Netlify deploys. `pnpm lint` calls ESLint and stylelint, and `pnpm test` executes the Vitest suite with coverage. Execute `pnpm script:sync` before submitting content to normalize markdown spacing and shared assets.
+Run `pnpm install` to satisfy the preinstall guard and sync workspace dependencies. Use `pnpm dev --filter @icebreakers/blog-archived` for Nuxt development or `pnpm dev` to start all active apps. `pnpm build` produces Netlify-ready bundles, `pnpm lint` runs ESLint plus Stylelint, and `pnpm test` executes the Vitest suite with coverage. Before shipping content updates, execute `pnpm script:sync` to normalize markdown and assets.
 
 ## Coding Style & Naming Conventions
-Write TypeScript ESM modules and avoid introducing CommonJS files. Name Vue components with PascalCase filenames like `blog-archived/client/components/global/OutSideLink.vue`, while utilities stay in lowercase-kebab directories. Rely on the repository ESLint plus `@icebreakers/stylelint-config` for formatting; enable editor format-on-save instead of manual styling.
+Author ESM-based TypeScript or Vue files only—avoid CommonJS. Follow repository formatting via the root `eslint.config.js` and `@icebreakers/stylelint-config`; enable editor format-on-save instead of manual edits. Name Vue components with PascalCase filenames (e.g., `blog-archived/client/components/global/OutsideLink.vue`) and keep utility directories in lowercase-kebab case. Prefer descriptive module names that reflect feature scope.
 
 ## Testing Guidelines
-Vitest is the single testing framework. Co-locate `*.test.ts` or `*.spec.ts` beside the code under test, using deterministic fixtures from `blog-archived/fixtures/` when possible. Run `pnpm test` before each push and expand coverage with meaningful assertions whenever behavior changes.
+Vitest is the standard test runner. Place `*.test.ts` or `*.spec.ts` beside the code under test and reuse deterministic fixtures from `blog-archived/fixtures/`. Target meaningful coverage, capturing regression cases for scripts and content processors. Run `pnpm test` locally before every push and ensure CI remains green when introducing new packages or Turbo pipelines.
 
 ## Commit & Pull Request Guidelines
-Follow Conventional Commits, e.g. `feat(blog-archived): add hero block`. Ensure `pnpm lint` and `pnpm test` pass, update documentation when behavior shifts, and attach Netlify or UI screenshots for visual updates. Link relevant issues in the PR description, add a Changeset for published packages, and keep generated artifacts out of Git.
+Use Conventional Commits such as `feat(blog-archived): add hero block`. Each PR should describe scope, link related issues, and attach Netlify or UI screenshots for visual changes. Verify `pnpm lint` and `pnpm test` are clean, update documentation for behavior shifts, and add a Changeset for publishable packages. Keep generated artifacts out of Git history.
 
-## Automation & Environment Notes
-The project targets Node 20; match the version locally or via Volta. Turbo orchestrates workspace tasks, so keep new scripts declarative and cache-aware. Respect Husky hooks and the preinstall guard—they enforce consistent tooling across contributors.
+## Automation & Environment
+Match the Node 20 target (consider Volta) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json`, `monorepo.config.ts`, and existing scripts before adding new tasks so caching and filters remain accurate. When unsure, run `git pull origin main --ff-only` before branching to sync with the automation defaults.

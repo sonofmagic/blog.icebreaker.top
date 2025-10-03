@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+
 const route = useRoute()
 const slugParam = route.params.slug
 const slugSegments = Array.isArray(slugParam) ? slugParam : [slugParam].filter(Boolean)
@@ -24,9 +26,42 @@ function parseMeta(entry: Record<string, any>) {
   return {}
 }
 
+function gatherNodeText(node: any): string {
+  if (!node || typeof node !== 'object') {
+    return ''
+  }
+  if (typeof node.value === 'string') {
+    return node.value
+  }
+  if (Array.isArray(node.children)) {
+    return node.children.map(child => gatherNodeText(child)).join('')
+  }
+  return ''
+}
+
+function extractFirstParagraphText(body: any): string | undefined {
+  if (!body || typeof body !== 'object') {
+    return undefined
+  }
+  const nodes = Array.isArray(body.children) ? body.children : []
+  for (const node of nodes) {
+    if (!node || typeof node !== 'object') {
+      continue
+    }
+    const isParagraph = node.tag === 'p' || node.type === 'element' && node.tag === 'p'
+    if (isParagraph) {
+      const text = gatherNodeText(node).trim()
+      if (text) {
+        return text.replace(/\s+/g, ' ')
+      }
+    }
+  }
+  return undefined
+}
+
 const { data: article } = await useAsyncData(`article:${contentPath}`, async () => {
   const entry = await queryCollection('articles')
-    .select('id', 'title', 'description', 'path', 'body', 'meta')
+    .select('id', 'title', 'description', 'path', 'body', 'meta', 'date', 'updatedAt', 'tags', 'cover', 'image', 'readingMinutes', 'readingWords')
     .path(contentPath)
     .first()
 
@@ -89,6 +124,45 @@ const hasToc = computed(() => tocLinks.value.length > 0)
 const isTocOpen = ref(false)
 const previousArticle = computed(() => adjacent.value?.prev ?? null)
 const nextArticle = computed(() => adjacent.value?.next ?? null)
+
+const articleSeo = computed(() => {
+  const record = article.value as Record<string, any> | null
+  if (!record) {
+    return {
+      title: '文章不存在',
+      description: '文章不存在或已被移动。',
+      noindex: true,
+      path: contentPath ?? route.path ?? '/',
+    }
+  }
+
+  const tags = Array.isArray(record.tags)
+    ? record.tags.filter((tag: unknown): tag is string => typeof tag === 'string')
+    : undefined
+
+  const description = typeof record.description === 'string' && record.description.trim().length > 0
+    ? record.description.trim()
+    : extractFirstParagraphText(record.body)
+
+  const imageCandidates = [record.ogImage, record.cover, record.image]
+  const image = imageCandidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+
+  const publishedTime = typeof record.date === 'string' && record.date.length > 0 ? record.date : undefined
+  const modifiedTime = typeof record.updatedAt === 'string' && record.updatedAt.length > 0 ? record.updatedAt : publishedTime
+
+  return {
+    title: typeof record.title === 'string' && record.title.length > 0 ? record.title : '文章详情',
+    description,
+    image,
+    type: 'article' as const,
+    publishedTime,
+    modifiedTime,
+    tags,
+    path: record.path ?? contentPath ?? route.path ?? '/',
+  }
+})
+
+useSiteSeo(articleSeo)
 
 const tocUi = {
   root: 'lg:w-full lg:!border-none lg:!shadow-none',

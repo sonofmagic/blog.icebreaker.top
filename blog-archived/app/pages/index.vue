@@ -109,6 +109,12 @@ watch(hiddenTagCount, (count) => {
   }
 })
 
+useSiteSeo(() => ({
+  title: '文章归档',
+  description: `icebreaker 的实验笔记与文章合集，当前收录 ${totalArticleCount.value} 篇，覆盖 ${allTags.value.length} 个主题标签。`,
+  type: 'website',
+}))
+
 const tagButtonBaseClass = [
   'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium tracking-[0.02em]',
   'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--gh-accent-emphasis]/30 focus-visible:ring-offset-2',
@@ -214,7 +220,6 @@ function toggleTagVisibility() {
                 </span>
               </button>
             </div>
-
           </div>
         </div>
 
@@ -257,7 +262,6 @@ function toggleTagVisibility() {
           >
             暂无内容，敬请期待后续更新。
           </div>
-
         </template>
       </div>
     </div>

@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
+import { computed } from 'vue'
 
-defineProps<{ error: NuxtError }>()
+const { error } = defineProps<{ error: NuxtError }>()
+
+const statusCode = computed(() => error?.statusCode ?? 500)
+
+useSiteSeo(() => ({
+  title: `${statusCode.value} 错误`,
+  description: error?.message ?? '页面未找到或发生错误。',
+  noindex: true,
+}))
 </script>
 
 <template>

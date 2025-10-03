@@ -40,9 +40,15 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
     </header>
 
     <div class="card__body">
-      <ULink :to="props.article.path" class="card__title">{{ props.article.title }}</ULink>
-      <p v-if="props.article.description" class="card__excerpt">{{ props.article.description }}</p>
-      <p v-else class="card__excerpt card__excerpt--muted">暂无简介，欢迎直接阅读。</p>
+      <ULink :to="props.article.path" class="card__title">
+        {{ props.article.title }}
+      </ULink>
+      <p v-if="props.article.description" class="card__excerpt">
+        {{ props.article.description }}
+      </p>
+      <p v-else class="card__excerpt card__excerpt--muted">
+        暂无简介，欢迎直接阅读。
+      </p>
 
       <div v-if="topTags.length" class="card__tags">
         <span v-for="tag in topTags" :key="tag" class="card__tag">{{ tag }}</span>

@@ -42,7 +42,6 @@ const toggleLabel = computed(() => (isDark.value ? '切换到亮色主题' : '�
 function toggleMode() {
   setMode(isDark.value ? 'light' : 'dark')
 }
-
 </script>
 
 <template>
