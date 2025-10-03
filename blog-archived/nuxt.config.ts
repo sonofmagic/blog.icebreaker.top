@@ -90,6 +90,7 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
     prerender: {
+      autoSubfolderIndex: false,
       crawlLinks: true,
       routes: ['/'],
     },
