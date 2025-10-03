@@ -109,6 +109,29 @@ watch(hiddenTagCount, (count) => {
   }
 })
 
+const tagButtonBaseClass = [
+  'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium tracking-[0.02em]',
+  'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--gh-accent-emphasis]/30 focus-visible:ring-offset-2',
+].join(' ')
+
+const tagButtonActiveClass = [
+  'border-[--gh-accent-emphasis] bg-[--gh-accent-subtle] text-[--gh-accent-emphasis] shadow-[0_12px_30px_-18px_rgba(31,111,235,0.35)]',
+  'hover:border-[--gh-accent-emphasis] hover:bg-[rgba(31,111,235,0.18)] hover:text-[--gh-accent-emphasis] dark:hover:bg-[rgba(65,132,228,0.26)]',
+  'focus-visible:ring-offset-[--panel-bg] dark:focus-visible:ring-offset-[--panel-bg]',
+].join(' ')
+
+const tagButtonInactiveClass = [
+  'border-[--surface-border]/70 bg-[--panel-bg] text-muted',
+  'hover:bg-[--panel-bg-soft] hover:border-[--surface-border]/40 hover:text-[--gh-accent-emphasis]',
+  'focus-visible:ring-offset-[--panel-bg]',
+].join(' ')
+
+const tagBadgeBaseClass = 'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[0.65rem] tracking-[0.08em] transition-colors duration-150'
+
+const tagBadgeActiveClass = 'bg-[rgba(31,111,235,0.18)] text-[--gh-accent-emphasis] dark:bg-[rgba(65,132,228,0.24)] dark:text-[--gh-accent-emphasis]'
+
+const tagBadgeInactiveClass = 'bg-slate-400/10 text-muted'
+
 function toggleTag(tag: string | null) {
   if (!tag) {
     activeTag.value = null
@@ -162,16 +185,14 @@ function toggleTagVisibility() {
               :class="showAllTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto pr-6'"
             >
               <button
-                class="inline-flex items-center gap-2 rounded-full border border-[--surface-border]/70 bg-[--panel-bg] px-3 py-1.5 text-xs font-medium tracking-[0.02em] text-muted transition-colors duration-150 hover:bg-[--panel-bg-soft] hover:border-[--surface-border]/40 hover:text-[--gh-accent-emphasis] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--gh-accent-emphasis]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[--panel-bg]"
-                :class="activeTag ? '' : 'border-[--gh-accent-emphasis] bg-[--gh-accent-emphasis] text-white shadow-[0_12px_30px_-18px_rgba(31,111,235,0.7)]'"
+                :class="[tagButtonBaseClass, activeTag ? tagButtonInactiveClass : tagButtonActiveClass]"
                 type="button"
                 :aria-pressed="!activeTag"
                 @click="toggleTag(null)"
               >
                 <span class="whitespace-nowrap">全部</span>
                 <span
-                  class="inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-slate-400/10 px-2 py-0.5 text-[0.65rem] tracking-[0.08em]"
-                  :class="activeTag ? '' : 'bg-white/20 text-white'"
+                  :class="[tagBadgeBaseClass, activeTag ? tagBadgeInactiveClass : tagBadgeActiveClass]"
                 >
                   {{ totalArticleCount }}
                 </span>
@@ -180,16 +201,14 @@ function toggleTagVisibility() {
               <button
                 v-for="tag in visibleTags"
                 :key="tag.label"
-                class="inline-flex items-center gap-2 rounded-full border border-[--surface-border]/70 bg-[--panel-bg] px-3 py-1.5 text-xs font-medium tracking-[0.02em] text-muted transition-colors duration-150 hover:bg-[--panel-bg-soft] hover:border-[--surface-border]/40 hover:text-[--gh-accent-emphasis] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--gh-accent-emphasis]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[--panel-bg]"
-                :class="activeTag === tag.label ? 'border-[--gh-accent-emphasis] bg-[--gh-accent-emphasis] text-white shadow-[0_12px_30px_-18px_rgba(31,111,235,0.7)]' : ''"
+                :class="[tagButtonBaseClass, activeTag === tag.label ? tagButtonActiveClass : tagButtonInactiveClass]"
                 type="button"
                 :aria-pressed="activeTag === tag.label"
                 @click="toggleTag(tag.label)"
               >
                 <span class="whitespace-nowrap">{{ tag.label }}</span>
                 <span
-                  class="inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-slate-400/10 px-2 py-0.5 text-[0.65rem] tracking-[0.08em]"
-                  :class="activeTag === tag.label ? 'bg-white/20 text-white' : ''"
+                  :class="[tagBadgeBaseClass, activeTag === tag.label ? tagBadgeActiveClass : tagBadgeInactiveClass]"
                 >
                   {{ tag.count }}
                 </span>

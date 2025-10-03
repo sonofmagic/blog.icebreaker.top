@@ -53,7 +53,6 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
     <footer class="card__footer">
       <div class="card__footer-copy">
         <span class="card__footer-label">继续阅读</span>
-        <span class="card__footer-title">{{ props.article.title }}</span>
       </div>
       <ULink
         :to="props.article.path"
@@ -211,13 +210,6 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
   letter-spacing: 0.32em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--gh-fg-default) 55%, transparent 45%);
-}
-
-.card__footer-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--gh-fg-default);
-  max-width: 20rem;
 }
 
 .card__cta {
