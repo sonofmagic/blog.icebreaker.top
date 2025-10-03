@@ -87,7 +87,36 @@ export default defineNuxtConfig({
   site: {
 
   },
-  // nitro: {
-  //   preset: 'cloudflare-pages',
+  nitro: {
+    preset: 'static',
+    prerender: {
+      crawlLinks: true,
+      routes: ['/'],
+    },
+  },
+  // hooks: {
+  //   'nitro:config': async function (nitroConfig) {
+  //     if (nitroConfig.dev) {
+  //       return
+  //     }
+  //     try {
+  //       const { serverQueryContent } = await import('#content/server')
+  //       const docs = await serverQueryContent().only(['_path']).find()
+
+  //       nitroConfig.prerender = nitroConfig.prerender || {}
+  //       const routeSet = new Set<string>(nitroConfig.prerender.routes || [])
+
+  //       for (const doc of docs) {
+  //         if (doc && typeof doc._path === 'string' && doc._path.length > 0) {
+  //           routeSet.add(doc._path)
+  //         }
+  //       }
+
+  //       nitroConfig.prerender.routes = Array.from(routeSet)
+  //     }
+  //     catch (error) {
+  //       console.warn('[nitro] Failed to collect content routes for prerender', error)
+  //     }
+  //   },
   // },
 })

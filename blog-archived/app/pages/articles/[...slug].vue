@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-
 const route = useRoute()
 const slugParam = route.params.slug
 const slugSegments = Array.isArray(slugParam) ? slugParam : [slugParam].filter(Boolean)
@@ -61,7 +59,7 @@ function extractFirstParagraphText(body: any): string | undefined {
 
 const { data: article } = await useAsyncData(`article:${contentPath}`, async () => {
   const entry = await queryCollection('articles')
-    .select('id', 'title', 'description', 'path', 'body', 'meta', 'date', 'updatedAt', 'tags', 'cover', 'image', 'readingMinutes', 'readingWords')
+    .select('id', 'title', 'description', 'path', 'body', 'meta', 'date')
     .path(contentPath)
     .first()
 
