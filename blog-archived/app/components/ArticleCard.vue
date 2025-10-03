@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface ArticleSummary {
   path: string
   title: string
@@ -7,76 +9,244 @@ interface ArticleSummary {
   tags: string[]
   readingMinutes?: number
   readingWords?: number
+  rank: number
 }
 
 const props = defineProps<{ article: ArticleSummary }>()
+
+const rankLabel = computed(() => props.article.rank.toString().padStart(2, '0'))
+const formattedDate = computed(() => props.article.date ?? '尚未记录')
+const readingMeta = computed(() => {
+  const meta: string[] = []
+  if (props.article.readingMinutes) {
+    meta.push(`${props.article.readingMinutes} 分钟阅读`)
+  }
+  if (props.article.readingWords) {
+    meta.push(`${props.article.readingWords} 字`)
+  }
+  return meta.join(' · ')
+})
+const topTags = computed(() => props.article.tags.slice(0, 3))
 </script>
 
 <template>
-  <article
-    class="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-[--surface-border]/70 bg-[--panel-bg-soft]/95 shadow-[0_28px_65px_-40px_var(--gh-shadow,rgba(15,23,42,0.45))] transition-all duration-300 hover:-translate-y-[8px] hover:border-[--surface-border]/40 hover:shadow-[0_35px_75px_-35px_var(--gh-shadow,rgba(15,23,42,0.6))]"
-  >
-    <span class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(94,106,255,0.12),transparent_55%)] opacity-60 transition-opacity duration-300 group-hover:opacity-90" />
-    <span class="pointer-events-none absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-[--gh-accent-emphasis]/50 to-transparent opacity-50 group-hover:opacity-80" />
-
-    <div class="relative flex flex-1 flex-col gap-6 px-6 pb-6 pt-8">
-      <div class="space-y-4">
-        <div class="inline-flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.3em] text-[--gh-accent-emphasis]/70">
-          <span class="size-1.5 rounded-full bg-[--gh-accent-emphasis]" />
-          <span>笔记</span>
-        </div>
-
-        <ULink
-          :to="props.article.path"
-          class="block text-lg font-semibold leading-tight tracking-tight text-[--gh-fg-default] transition-colors duration-200 hover:text-[--gh-accent-emphasis] sm:text-xl"
-        >
-          {{ props.article.title }}
-        </ULink>
-
-        <p v-if="props.article.description" class="line-clamp-3 text-sm leading-relaxed text-muted sm:text-base">
-          {{ props.article.description }}
-        </p>
+  <article class="card group">
+    <header class="card__header">
+      <div class="card__identity">
+        <span class="card__rank">{{ rankLabel }}</span>
+        <span class="card__date">{{ formattedDate }}</span>
       </div>
+      <span v-if="readingMeta" class="card__meta">{{ readingMeta }}</span>
+    </header>
 
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted sm:text-sm">
-        <span v-if="props.article.date" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-calendar" class="size-3.5" />
-          {{ props.article.date }}
-        </span>
-        <span v-if="props.article.readingMinutes" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-timer" class="size-3.5" />
-          {{ props.article.readingMinutes }} 分钟
-        </span>
-        <span v-if="props.article.readingWords" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-type" class="size-3.5" />
-          {{ props.article.readingWords }} 字
-        </span>
-      </div>
+    <div class="card__body">
+      <ULink :to="props.article.path" class="card__title">{{ props.article.title }}</ULink>
+      <p v-if="props.article.description" class="card__excerpt">{{ props.article.description }}</p>
+      <p v-else class="card__excerpt card__excerpt--muted">暂无简介，欢迎直接阅读。</p>
 
-      <div v-if="props.article.tags.length" class="mt-auto flex flex-wrap gap-2">
-        <span
-          v-for="tag in props.article.tags"
-          :key="tag"
-          class="inline-flex items-center gap-1 rounded-full border border-[--surface-border]/80 bg-[--panel-bg] px-2.5 py-1 text-xs font-medium text-muted transition-colors duration-200 hover:border-[--gh-accent-emphasis]/60 hover:text-[--gh-accent-emphasis]"
-        >
-          <UIcon name="i-lucide-hash" class="size-3" />
-          {{ tag }}
-        </span>
+      <div v-if="topTags.length" class="card__tags">
+        <span v-for="tag in topTags" :key="tag" class="card__tag">{{ tag }}</span>
+        <span v-if="props.article.tags.length > topTags.length" class="card__tag card__tag--extra">+{{ props.article.tags.length - topTags.length }}</span>
       </div>
     </div>
 
-    <div class="relative flex items-center justify-between border-t border-[--surface-border]/70 bg-[--panel-bg] px-6 py-4 text-xs text-muted">
-      <span class="inline-flex items-center gap-1">
-        <UIcon name="i-lucide-arrow-up-right" class="size-3" />
-        阅读全文
-      </span>
+    <footer class="card__footer">
+      <div class="card__footer-copy">
+        <span class="card__footer-label">继续阅读</span>
+        <span class="card__footer-title">{{ props.article.title }}</span>
+      </div>
       <ULink
         :to="props.article.path"
-        class="inline-flex size-9 items-center justify-center rounded-full border border-transparent bg-[--gh-accent-subtle] text-[--gh-accent-emphasis] transition-colors duration-200 hover:border-[--gh-accent-emphasis] hover:bg-transparent"
+        class="card__cta"
         aria-label="前往文章"
       >
+        阅读全文
         <UIcon name="i-lucide-arrow-right" class="size-4" />
       </ULink>
-    </div>
+    </footer>
   </article>
 </template>
+
+<style scoped>
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--surface-border) 90%, transparent 10%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--panel-bg) 94%, transparent 6%), color-mix(in srgb, var(--panel-bg) 92%, transparent 8%));
+  padding: 1.75rem;
+  box-shadow: 0 24px 60px -42px rgba(15, 23, 42, 0.55);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--gh-accent-emphasis) 18%, transparent) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 32px 80px -38px rgba(15, 23, 42, 0.6);
+  border-color: color-mix(in srgb, var(--surface-border) 70%, transparent 30%);
+}
+
+.card:hover::before {
+  opacity: 0.9;
+}
+
+.card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: color-mix(in srgb, var(--gh-fg-default) 65%, transparent 35%);
+}
+
+.card__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card__rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-accent-subtle) 75%, transparent 25%);
+  color: var(--gh-accent-emphasis);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.card__date {
+  font-weight: 500;
+}
+
+.card__meta {
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--gh-fg-default) 55%, transparent 45%);
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card__title {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--gh-fg-default);
+  transition: color 0.2s ease;
+}
+
+.card__title:hover {
+  color: var(--gh-accent-emphasis);
+}
+
+.card__excerpt {
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  color: color-mix(in srgb, var(--gh-fg-default) 70%, transparent 30%);
+  line-height: 1.7;
+}
+
+.card__excerpt--muted {
+  font-style: italic;
+  color: color-mix(in srgb, var(--gh-fg-default) 55%, transparent 45%);
+}
+
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+}
+
+.card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-bg) 90%, transparent 10%);
+  border: 1px solid color-mix(in srgb, var(--surface-border) 85%, transparent 15%);
+  color: color-mix(in srgb, var(--gh-fg-default) 65%, transparent 35%);
+}
+
+.card__tag--extra {
+  border-style: dashed;
+}
+
+.card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--surface-border) 80%, transparent 20%);
+  padding-top: 1.1rem;
+}
+
+.card__footer-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.card__footer-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--gh-fg-default) 55%, transparent 45%);
+}
+
+.card__footer-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gh-fg-default);
+  max-width: 20rem;
+}
+
+.card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--surface-border) 80%, transparent 20%);
+  color: var(--gh-accent-emphasis);
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.card__cta:hover {
+  background: color-mix(in srgb, var(--gh-accent-subtle) 70%, transparent 30%);
+  border-color: var(--gh-accent-emphasis);
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  .card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+}
+</style>

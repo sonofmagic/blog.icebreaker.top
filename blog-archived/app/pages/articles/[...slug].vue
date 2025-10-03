@@ -29,6 +29,7 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
     .select('id', 'title', 'description', 'path', 'body', 'meta')
     .path(contentPath)
     .first()
+
   if (!entry) {
     throw createError({ statusCode: 404, statusMessage: '文章不存在' })
   }
@@ -48,11 +49,78 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
     body,
   }
 })
+
+const { data: adjacent } = await useAsyncData(`article-nav:${contentPath}`, async () => {
+  const entries = await queryCollection('articles')
+    .select('title', 'path', 'date', 'meta')
+    .all()
+
+  const list = (Array.isArray(entries) ? entries : [])
+    .map(entry => ({
+      ...entry,
+      ...parseMeta(entry),
+    }))
+    .filter(entry => entry.draft !== true)
+    .sort((a, b) => new Date(b.date ?? '').getTime() - new Date(a.date ?? '').getTime())
+
+  const currentIndex = list.findIndex(entry => entry.path === contentPath)
+  if (currentIndex === -1) {
+    return { prev: null, next: null }
+  }
+
+  const older = list[currentIndex + 1] ?? null
+  const newer = list[currentIndex - 1] ?? null
+
+  const mapEntry = (entry: any) => entry
+    ? {
+        path: entry.path,
+        title: typeof entry.title === 'string' && entry.title.length > 0 ? entry.title : '未命名',
+      }
+    : null
+
+  return {
+    prev: mapEntry(older),
+    next: mapEntry(newer),
+  }
+})
+
+const tocLinks = computed(() => article.value?.body?.toc?.links ?? [])
+const hasToc = computed(() => tocLinks.value.length > 0)
+const isTocOpen = ref(false)
+const previousArticle = computed(() => adjacent.value?.prev ?? null)
+const nextArticle = computed(() => adjacent.value?.next ?? null)
+
+const tocUi = {
+  root: 'lg:w-full lg:!border-none lg:!shadow-none',
+  container: 'lg:gap-3',
+  content: 'lg:flex lg:flex-col lg:gap-1.5 lg:!overflow-visible',
+  list: 'space-y-1 text-sm text-muted leading-relaxed',
+  listWithChildren: 'mt-2 space-y-1 border-l border-[--surface-border]/60 pl-3',
+  item: 'max-w-full overflow-hidden',
+  itemWithChildren: 'max-w-full overflow-hidden',
+  link: 'block max-w-full truncate rounded-lg px-3 py-1.5 text-left transition-colors duration-150 hover:bg-[--panel-bg-soft] hover:text-[--gh-accent-emphasis]',
+  linkText: 'break-words text-left',
+  indicator: 'bg-[--gh-accent-subtle]',
+}
+
+function handleTocMove(_id?: string) {
+  if (!import.meta.client) {
+    return
+  }
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
+  if (isTocOpen.value) {
+    window.setTimeout(() => {
+      isTocOpen.value = false
+    }, 200)
+  }
+}
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 sm:gap-6">
-    <div class="flex items-center justify-between gap-3">
+  <div class="relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
+    <div class="flex flex-col gap-6">
       <UButton
         to="/"
         variant="ghost"
@@ -62,32 +130,99 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
         返回首页
       </UButton>
 
-      <div v-if="article" class="flex flex-wrap items-center gap-3 text-xs text-muted sm:text-sm">
-        <span v-if="article.date" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-calendar" class="size-3.5" />
-          {{ article.date }}
-        </span>
-        <span v-if="article.readingMinutes" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-timer" class="size-3.5" />
-          {{ article.readingMinutes }} 分钟
-        </span>
-        <span v-if="article.readingWords" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-type" class="size-3.5" />
-          {{ article.readingWords }} 字
-        </span>
+      <ContentRenderer v-if="article" :value="article" />
+
+      <UAlert
+        v-else
+        color="primary"
+        variant="soft"
+        icon="i-lucide-loader-2"
+        class="animate-pulse text-sm sm:text-base"
+      >
+        正在加载文章…
+      </UAlert>
+
+      <div
+        v-if="previousArticle || nextArticle"
+        class="mt-10 border-t border-[--surface-border]/60 pt-6"
+      >
+        <div class="grid gap-4 sm:grid-cols-2">
+          <ULink
+            v-if="previousArticle"
+            :to="previousArticle.path"
+            class="group flex flex-col gap-2 rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] px-4 py-4 transition-colors hover:border-[--gh-accent-emphasis]/60 hover:bg-[--panel-bg-soft]"
+          >
+            <span class="text-xs uppercase tracking-[0.28em] text-muted/70">上一篇</span>
+            <span class="text-sm font-semibold leading-snug text-[--gh-fg-default] group-hover:text-[--gh-accent-emphasis]">
+              {{ previousArticle.title }}
+            </span>
+          </ULink>
+
+          <ULink
+            v-if="nextArticle"
+            :to="nextArticle.path"
+            class="group flex flex-col gap-2 rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] px-4 py-4 transition-colors hover:border-[--gh-accent-emphasis]/60 hover:bg-[--panel-bg-soft]"
+          >
+            <span class="text-xs uppercase tracking-[0.28em] text-muted/70">下一篇</span>
+            <span class="text-sm font-semibold leading-snug text-[--gh-fg-default] group-hover:text-[--gh-accent-emphasis]">
+              {{ nextArticle.title }}
+            </span>
+          </ULink>
+        </div>
       </div>
     </div>
 
-    <ContentRenderer v-if="article" :value="article" />
-
-    <UAlert
-      v-else
-      color="primary"
-      variant="soft"
-      icon="i-lucide-loader-2"
-      class="animate-pulse text-sm sm:text-base"
+    <aside
+      v-if="hasToc"
+      class="sticky top-32 hidden h-fit max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden rounded-3xl border border-[--surface-border]/60 bg-[--panel-bg] p-5 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] lg:block"
     >
-      正在加载文章…
-    </UAlert>
+      <div class="text-[0.65rem] uppercase tracking-[0.3em] text-muted/60">
+        Contents
+      </div>
+      <h2 class="mt-2 text-sm font-semibold tracking-wide text-muted-strong">
+        文章目录
+      </h2>
+      <div class="mt-4 -mr-2 pr-2">
+        <UContentToc :links="tocLinks" :ui="tocUi" highlight default-open @move="handleTocMove" />
+      </div>
+    </aside>
+
+    <div v-if="hasToc" class="pointer-events-none lg:hidden">
+      <div class="fixed inset-x-0 bottom-5 z-40 flex justify-center">
+        <UButton
+          class="pointer-events-auto rounded-full border border-[--surface-border]/70 bg-[--panel-bg] px-5 py-2 text-sm font-medium shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur"
+          size="sm"
+          :icon="isTocOpen ? 'i-lucide-x' : 'i-lucide-list-tree'"
+          @click="isTocOpen = !isTocOpen"
+        >
+          {{ isTocOpen ? '收起目录' : '目录' }}
+        </UButton>
+      </div>
+
+      <div
+        v-if="isTocOpen"
+        class="fixed inset-0 z-30 flex flex-col justify-end bg-black/60 backdrop-blur-sm"
+        @click.self="isTocOpen = false"
+      >
+        <div class="mx-auto mb-6 w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-3xl border border-[--surface-border]/80 bg-[--panel-bg] p-5 shadow-[0_24px_60px_-25px_rgba(15,23,42,0.6)]">
+          <div class="mb-4 flex items-center justify-between">
+            <p class="text-sm font-semibold text-muted-strong">
+              文章目录
+            </p>
+            <UButton
+              variant="ghost"
+              size="sm"
+              icon="i-lucide-x"
+              class="text-muted"
+              aria-label="关闭目录"
+              @click="isTocOpen = false"
+            />
+          </div>
+          <div>
+            <UContentToc :links="tocLinks" :ui="tocUi" highlight default-open @move="handleTocMove" />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
