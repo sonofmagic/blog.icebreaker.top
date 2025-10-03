@@ -262,9 +262,9 @@ function handleTocMove(_id?: string) {
     </aside>
 
     <div v-if="hasToc" class="pointer-events-none lg:hidden">
-      <div class="fixed inset-x-0 bottom-5 z-40 flex justify-center">
+      <div class="fixed inset-x-0 bottom-5 z-40 flex justify-center pointer-events-auto">
         <UButton
-          class="pointer-events-auto rounded-full border border-[--surface-border]/70 bg-[--panel-bg] px-5 py-2 text-sm font-medium shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur"
+          class="pointer-events-auto rounded-full border border-[--gh-accent-emphasis]/60 bg-[--gh-accent-subtle] px-5 py-2 text-sm font-medium text-[--gh-accent-emphasis] shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur transition-colors duration-150 hover:border-[--gh-accent-emphasis] hover:bg-[rgba(31,111,235,0.18)] hover:text-[--gh-accent-emphasis] dark:hover:bg-[rgba(65,132,228,0.26)]"
           size="sm"
           :icon="isTocOpen ? 'i-lucide-x' : 'i-lucide-list-tree'"
           @click="isTocOpen = !isTocOpen"
@@ -275,10 +275,10 @@ function handleTocMove(_id?: string) {
 
       <div
         v-if="isTocOpen"
-        class="fixed inset-0 z-30 flex flex-col justify-end bg-black/60 backdrop-blur-sm"
+        class="fixed inset-0 z-30 flex flex-col justify-end bg-black/60 backdrop-blur-sm pointer-events-auto"
         @click.self="isTocOpen = false"
       >
-        <div class="mx-auto mb-6 w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-3xl border border-[--surface-border]/80 bg-[--panel-bg] p-5 shadow-[0_24px_60px_-25px_rgba(15,23,42,0.6)]">
+        <div class="mx-auto mb-6 w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-3xl border border-[--surface-border]/80 bg-[--panel-bg] p-5 shadow-[0_24px_60px_-25px_rgba(15,23,42,0.6)] pointer-events-auto">
           <div class="mb-4 flex items-center justify-between">
             <p class="text-sm font-semibold text-muted-strong">
               文章目录
