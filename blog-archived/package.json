@@ -13,7 +13,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "sync": "node ./scripts/syncArticles.js"
   },
   "dependencies": {
     "@iconify/tailwind": "^1.2.0",
