@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { MarkdownRoot } from '@nuxt/content'
+
 const route = useRoute()
 const slugParam = route.params.slug
 const slugSegments = Array.isArray(slugParam) ? slugParam : [slugParam].filter(Boolean)
@@ -32,7 +34,9 @@ function gatherNodeText(node: any): string {
     return node.value
   }
   if (Array.isArray(node.children)) {
-    return node.children.map(child => gatherNodeText(child)).join('')
+    return node.children.map(
+      child => gatherNodeText(child),
+    ).join('')
   }
   return ''
 }
@@ -46,7 +50,7 @@ function extractFirstParagraphText(body: any): string | undefined {
     if (!node || typeof node !== 'object') {
       continue
     }
-    const isParagraph = node.tag === 'p' || node.type === 'element' && node.tag === 'p'
+    const isParagraph = node.tag === 'p' || (node.type === 'element' && node.tag === 'p')
     if (isParagraph) {
       const text = gatherNodeText(node).trim()
       if (text) {
@@ -66,7 +70,7 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
     throw createError({ statusCode: 404, statusMessage: '文章不存在' })
   }
   const meta = parseMeta(entry)
-  let body = entry.body
+  let body: null | MarkdownRoot = entry.body
   if (typeof body === 'string') {
     try {
       body = JSON.parse(body)
@@ -80,7 +84,7 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
     ...meta,
     body,
   }
-}, { server: true, client: false })
+})
 
 const { data: adjacent } = await useAsyncData(`article-nav:${contentPath}`, async () => {
   const entries = await queryCollection('articles')
@@ -113,7 +117,7 @@ const { data: adjacent } = await useAsyncData(`article-nav:${contentPath}`, asyn
     prev: mapEntry(older),
     next: mapEntry(newer),
   }
-}, { server: true, client: false })
+})
 
 const tocLinks = computed(() => article.value?.body?.toc?.links ?? [])
 const hasToc = computed(() => tocLinks.value.length > 0)
