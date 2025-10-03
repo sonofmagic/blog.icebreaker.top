@@ -59,7 +59,6 @@ function extractFirstParagraphText(body: any): string | undefined {
 
 const { data: article } = await useAsyncData(`article:${contentPath}`, async () => {
   const entry = await queryCollection('articles')
-    .select('id', 'title', 'description', 'path', 'body', 'meta', 'date')
     .path(contentPath)
     .first()
 
@@ -81,11 +80,10 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
     ...meta,
     body,
   }
-})
+}, { server: true, client: false })
 
 const { data: adjacent } = await useAsyncData(`article-nav:${contentPath}`, async () => {
   const entries = await queryCollection('articles')
-    .select('title', 'path', 'date', 'meta')
     .all()
 
   const list = (Array.isArray(entries) ? entries : [])
@@ -115,7 +113,7 @@ const { data: adjacent } = await useAsyncData(`article-nav:${contentPath}`, asyn
     prev: mapEntry(older),
     next: mapEntry(newer),
   }
-})
+}, { server: true, client: false })
 
 const tocLinks = computed(() => article.value?.body?.toc?.links ?? [])
 const hasToc = computed(() => tocLinks.value.length > 0)

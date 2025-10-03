@@ -49,7 +49,7 @@ const { data, pending, error } = await useAsyncData('articles:home', async () =>
     ...summary,
     rank: total - index,
   }))
-})
+}, { server: true, client: false })
 
 const articles = computed(() => data.value || [])
 const totalArticleCount = computed(() => articles.value.length)
