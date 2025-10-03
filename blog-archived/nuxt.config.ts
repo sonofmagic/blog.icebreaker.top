@@ -85,7 +85,7 @@ export default defineNuxtConfig({
 
   },
   site: {
-
+    url: SITE_URL,
   },
   nitro: {
     preset: 'static',

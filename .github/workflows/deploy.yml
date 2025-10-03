@@ -55,7 +55,7 @@ jobs:
         
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }} 
-          command: pages deploy blog-archived/dist --project-name=icebreaker-blog
+          command: pages deploy blog-archived/.output/public --project-name=icebreaker-blog
       - name: print deployment-url
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
