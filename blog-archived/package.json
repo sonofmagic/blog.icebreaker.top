@@ -50,7 +50,7 @@
     "clsx": "^2.1.1",
     "cross-env": "^10.0.0",
     "dotenv": "^17.2.1",
-    "eslint": "^9.36.0",
+    "eslint": "^9.37.0",
     "glob": "^11.0.3",
     "klaw": "^4.1.0",
     "nuxt": "^4.1.2",
@@ -59,7 +59,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.1.1",
     "tailwindcss": "^4.0.0",
-    "theme-transition": "^1.0.2",
+    "theme-transition": "^2.0.0",
     "vitest": "^3.2.4"
   }
 }
