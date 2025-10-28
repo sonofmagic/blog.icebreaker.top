@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "sonofmagic/icebreaker.top"
+      "repo": "sonofmagic/blog.icebreaker.top"
     }
   ],
   "commit": false,
