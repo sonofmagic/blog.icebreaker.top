@@ -79,10 +79,17 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
   gap: 1.5rem;
   border-radius: 24px;
   border: 1px solid color-mix(in srgb, var(--surface-border) 90%, transparent 10%);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--panel-bg) 94%, transparent 6%), color-mix(in srgb, var(--panel-bg) 92%, transparent 8%));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--panel-bg) 94%, transparent 6%),
+    color-mix(in srgb, var(--panel-bg) 92%, transparent 8%)
+  );
   padding: 1.75rem;
   box-shadow: 0 24px 60px -42px rgba(15, 23, 42, 0.55);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .card::before {
@@ -90,7 +97,11 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--gh-accent-emphasis) 18%, transparent) 0%, transparent 60%);
+  background: radial-gradient(
+    circle at 20% 20%,
+    color-mix(in srgb, var(--gh-accent-emphasis) 18%, transparent) 0%,
+    transparent 60%
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -227,7 +238,9 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
   border: 1px solid color-mix(in srgb, var(--surface-border) 80%, transparent 20%);
   color: var(--gh-accent-emphasis);
   font-weight: 600;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .card__cta:hover {

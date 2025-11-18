@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MarkdownRoot } from '@nuxt/content'
+import ArticleTocList from '@/components/ArticleTocList.vue'
 
 const route = useRoute()
 const slugParam = route.params.slug
@@ -339,7 +340,13 @@ function handleTocMove(_id?: string) {
         文章目录
       </h2>
       <div class="mt-4 -mr-2 pr-2">
-        <UContentToc :links="tocLinks" :ui="tocUi" highlight default-open @move="handleTocMove" />
+        <ClientOnly fallback-tag="div">
+          <UContentToc :links="tocLinks" :ui="tocUi" highlight default-open @move="handleTocMove" />
+
+          <template #fallback>
+            <ArticleTocList :links="tocLinks" :toc-ui="tocUi" />
+          </template>
+        </ClientOnly>
       </div>
     </aside>
 
@@ -375,7 +382,13 @@ function handleTocMove(_id?: string) {
             />
           </div>
           <div>
-            <UContentToc :links="tocLinks" :ui="tocUi" highlight default-open @move="handleTocMove" />
+            <ClientOnly fallback-tag="div">
+              <UContentToc :links="tocLinks" :ui="tocUi" highlight default-open @move="handleTocMove" />
+
+              <template #fallback>
+                <ArticleTocList :links="tocLinks" :toc-ui="tocUi" />
+              </template>
+            </ClientOnly>
           </div>
         </div>
       </div>
