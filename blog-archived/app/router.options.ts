@@ -30,14 +30,16 @@ function resolveHashElement(hash: string) {
 }
 
 export default <RouterConfig>{
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
-      return { ...savedPosition, behavior: 'smooth' }
+      return { ...savedPosition }
     }
 
     if (!import.meta.client) {
       return { top: 0, left: 0 }
     }
+
+    const isSamePath = to.path === from.path
 
     return new Promise((resolve) => {
       requestAnimationFrame(() => {
@@ -47,12 +49,12 @@ export default <RouterConfig>{
             const header = document.querySelector('.app-header') as HTMLElement | null
             const offset = header ? header.getBoundingClientRect().height + 36 : 36
             const top = window.scrollY + target.getBoundingClientRect().top - offset
-            resolve({ left: 0, top: Math.max(top, 0), behavior: 'smooth' })
+            resolve({ left: 0, top: Math.max(top, 0), behavior: isSamePath ? 'smooth' : 'auto' })
             return
           }
         }
 
-        resolve({ left: 0, top: 0, behavior: 'smooth' })
+        resolve({ left: 0, top: 0, behavior: isSamePath ? 'smooth' : 'auto' })
       })
     })
   },
