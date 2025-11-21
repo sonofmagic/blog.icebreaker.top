@@ -18,7 +18,7 @@
   "dependencies": {
     "@iconify/tailwind": "^1.2.0",
     "axios": "^1.13.2",
-    "better-sqlite3": "^12.4.1",
+    "better-sqlite3": "^12.4.5",
     "dayjs": "^1.11.19",
     "feed": "^5.1.0",
     "file-saver": "^2.0.5",
