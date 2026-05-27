@@ -52,7 +52,7 @@ function toggleMode() {
       variant="ghost"
       color="neutral"
       size="sm"
-      class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-lg"
+      class="size-11 rounded-full !px-0 !py-0 flex items-center justify-center text-lg"
       :aria-label="toggleLabel"
       :aria-pressed="isDark"
       :title="`当前为${isDark ? '暗色' : '亮色'}主题 · ${toggleLabel}`"
@@ -64,7 +64,7 @@ function toggleMode() {
       variant="ghost"
       color="neutral"
       size="sm"
-      class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-lg"
+      class="size-11 rounded-full !px-0 !py-0 flex items-center justify-center text-lg"
       aria-label="在客户端渲染后启用主题切换"
       title="主题切换"
     />

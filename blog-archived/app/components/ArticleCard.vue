@@ -13,6 +13,10 @@ interface ArticleSummary {
 }
 
 const props = defineProps<{ article: ArticleSummary }>()
+const emit = defineEmits<{
+  selectTag: [tag: string]
+}>()
+const router = useRouter()
 
 const rankLabel = computed(() => props.article.rank.toString().padStart(2, '0'))
 const formattedDate = computed(() => props.article.date ?? '尚未记录')
@@ -27,10 +31,22 @@ const readingMeta = computed(() => {
   return meta.join(' · ')
 })
 const topTags = computed(() => props.article.tags.slice(0, 3))
+
+function selectTag(tag: string) {
+  emit('selectTag', tag)
+}
+
+function openArticleFromCard(event: MouseEvent) {
+  const target = event.target
+  if (target instanceof Element && target.closest('a, button')) {
+    return
+  }
+  void router.push(props.article.path)
+}
 </script>
 
 <template>
-  <article class="card group">
+  <article class="card group" @click="openArticleFromCard">
     <header class="card__header">
       <div class="card__identity">
         <span class="card__rank">{{ rankLabel }}</span>
@@ -40,10 +56,10 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
     </header>
 
     <div class="card__body">
-      <ULink :to="props.article.path" class="card__title">
+      <ULink :to="props.article.path" class="card__title" :title="props.article.title">
         {{ props.article.title }}
       </ULink>
-      <p v-if="props.article.description" class="card__excerpt">
+      <p v-if="props.article.description" class="card__excerpt" :title="props.article.description">
         {{ props.article.description }}
       </p>
       <p v-else class="card__excerpt card__excerpt--muted">
@@ -51,8 +67,24 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
       </p>
 
       <div v-if="topTags.length" class="card__tags">
-        <span v-for="tag in topTags" :key="tag" class="card__tag">{{ tag }}</span>
-        <span v-if="props.article.tags.length > topTags.length" class="card__tag card__tag--extra">+{{ props.article.tags.length - topTags.length }}</span>
+        <button
+          v-for="tag in topTags"
+          :key="tag"
+          type="button"
+          class="card__tag"
+          :aria-label="`筛选标签：${tag}`"
+          :title="`筛选标签：${tag}`"
+          @click="selectTag(tag)"
+        >
+          {{ tag }}
+        </button>
+        <span
+          v-if="props.article.tags.length > topTags.length"
+          class="card__tag card__tag--extra"
+          :title="props.article.tags.slice(topTags.length).join('、')"
+        >
+          +{{ props.article.tags.length - topTags.length }}
+        </span>
       </div>
     </div>
 
@@ -60,20 +92,18 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
       <div class="card__footer-copy">
         <span class="card__footer-label">继续阅读</span>
       </div>
-      <ULink
-        :to="props.article.path"
-        class="card__cta"
-        aria-label="前往文章"
-      >
+      <span class="card__cta" aria-hidden="true">
         阅读全文
         <UIcon name="i-lucide-arrow-right" class="size-4" />
-      </ULink>
+      </span>
     </footer>
   </article>
 </template>
 
 <style scoped>
 .card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -86,6 +116,7 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
   );
   padding: 1.75rem;
   box-shadow: 0 24px 60px -42px rgba(15, 23, 42, 0.55);
+  cursor: pointer;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease,
@@ -118,6 +149,8 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
 }
 
 .card__header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -157,25 +190,44 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
 }
 
 .card__body {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 .card__title {
-  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border-radius: 0.75rem;
+  font-size: 1.25rem;
   font-weight: 650;
   line-height: 1.35;
   color: var(--gh-fg-default);
   transition: color 0.2s ease;
 }
 
-.card__title:hover {
+.card__title::after {
+  content: '';
+  position: absolute;
+  inset: -10rem -2rem;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.card__title:hover,
+.card__title:focus-visible {
   color: var(--gh-accent-emphasis);
+  outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 38%, transparent);
+  outline-offset: 4px;
 }
 
 .card__excerpt {
-  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  font-size: 0.95rem;
   color: color-mix(in srgb, var(--gh-fg-default) 70%, transparent 30%);
   line-height: 1.7;
 }
@@ -186,6 +238,8 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
 }
 
 .card__tags {
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
@@ -194,13 +248,34 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
 
 .card__tag {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.5rem 0.85rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--panel-bg) 90%, transparent 10%);
   border: 1px solid color-mix(in srgb, var(--surface-border) 85%, transparent 15%);
   color: color-mix(in srgb, var(--gh-fg-default) 65%, transparent 35%);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+button.card__tag {
+  cursor: pointer;
+}
+
+button.card__tag:hover,
+button.card__tag:focus-visible {
+  border-color: color-mix(in srgb, var(--gh-accent-emphasis) 70%, transparent 30%);
+  background: color-mix(in srgb, var(--gh-accent-subtle) 72%, transparent 28%);
+  color: var(--gh-accent-emphasis);
+}
+
+button.card__tag:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 38%, transparent);
+  outline-offset: 3px;
 }
 
 .card__tag--extra {
@@ -208,6 +283,8 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
 }
 
 .card__footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -231,6 +308,7 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
 
 .card__cta {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.4rem;
   padding: 0.55rem 1.1rem;
@@ -238,12 +316,14 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
   border: 1px solid color-mix(in srgb, var(--surface-border) 80%, transparent 20%);
   color: var(--gh-accent-emphasis);
   font-weight: 600;
+  pointer-events: none;
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
 }
 
-.card__cta:hover {
+.card:hover .card__cta,
+.card:focus-within .card__cta {
   background: color-mix(in srgb, var(--gh-accent-subtle) 70%, transparent 30%);
   border-color: var(--gh-accent-emphasis);
 }
@@ -258,6 +338,22 @@ const topTags = computed(() => props.article.tags.slice(0, 3))
     flex-direction: column;
     align-items: flex-start;
     gap: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .card__title {
+    font-size: 1.375rem;
+  }
+
+  .card__excerpt {
+    font-size: 1rem;
   }
 }
 </style>

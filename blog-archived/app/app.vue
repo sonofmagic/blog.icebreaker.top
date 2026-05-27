@@ -1,9 +1,9 @@
 <template>
   <UApp>
-    <UMain>
+    <div class="min-h-[calc(100vh-var(--ui-header-height))]">
       <NuxtLayout>
         <NuxtPage />
       </NuxtLayout>
-    </UMain>
+    </div>
   </UApp>
 </template>

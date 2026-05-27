@@ -1,6 +1,6 @@
 import type { MaybeRefOrGetter } from 'vue'
-import { useRoute, useRuntimeConfig, useSeoMeta } from '#imports'
 import { computed, toValue } from 'vue'
+import { useHead, useRoute, useRuntimeConfig, useSeoMeta } from '#imports'
 
 interface SiteSeoInput {
   title?: string
@@ -51,6 +51,7 @@ export function useSiteSeo(meta: MaybeRefOrGetter<SiteSeoInput> = {}) {
     return {
       canonicalUrl,
       title,
+      fullTitle: title === siteName ? siteName : `${title} · ${siteName}`,
       description,
       ogImage,
       meta: {
@@ -76,6 +77,19 @@ export function useSiteSeo(meta: MaybeRefOrGetter<SiteSeoInput> = {}) {
   })
 
   useSeoMeta(() => resolved.value.meta)
+  useHead(() => ({
+    title: resolved.value.fullTitle,
+    titleTemplate: '%s',
+    htmlAttrs: {
+      lang: 'zh-Hans',
+    },
+    link: [
+      {
+        rel: 'canonical',
+        href: resolved.value.canonicalUrl,
+      },
+    ],
+  }))
 
   return resolved
 }

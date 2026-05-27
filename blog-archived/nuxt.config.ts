@@ -20,7 +20,6 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
     '@nuxt/test-utils',
     '@nuxt/icon',
-    '@nuxt/fonts',
     '@nuxtjs/color-mode',
     '@nuxt/ui',
     '@nuxt/content',
@@ -47,6 +46,9 @@ export default defineNuxtConfig({
   },
   content: {
 
+  },
+  ui: {
+    fonts: false,
   },
   runtimeConfig: {
     public: {
@@ -87,6 +89,10 @@ export default defineNuxtConfig({
   },
   site: {
     url: SITE_URL,
+    name: 'icebreaker / notes',
+    defaultLocale: 'zh-Hans',
+    currentLocale: 'zh-Hans',
+    titleSeparator: '·',
   },
   nitro: {
     preset: 'static',

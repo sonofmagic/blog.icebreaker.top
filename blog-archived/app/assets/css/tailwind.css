@@ -55,6 +55,11 @@
     color: inherit;
     text-decoration: none;
   }
+
+  :is(a, button, input, textarea, select, summary, [tabindex]:not([tabindex='-1'])):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 58%, transparent) !important;
+    outline-offset: 3px !important;
+  }
 }
 
 @layer components {
@@ -63,6 +68,31 @@
     display: flex;
     flex-direction: column;
     color: var(--gh-fg-default);
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100;
+    transform: translateY(-150%);
+    border-radius: 999px;
+    border: 1px solid var(--surface-border-strong);
+    background: var(--panel-bg);
+    padding: 0.65rem 1rem;
+    color: var(--gh-accent-emphasis);
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(18px);
+    transition: transform 0.18s ease;
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 50%, transparent);
+    outline-offset: 3px;
   }
 
   .app-header {
@@ -84,6 +114,13 @@
 
   .app-main {
     flex: 1;
+    outline: none;
+    scroll-margin-top: 7rem;
+  }
+
+  .app-main:focus {
+    border-radius: 1.25rem;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--gh-accent-emphasis) 22%, transparent);
   }
 
   .app-footer {
@@ -191,33 +228,417 @@
     color: var(--muted-strong);
   }
 
+  .article-content,
   .prose {
     color: var(--gh-fg-default);
     max-width: 70ch;
   }
 
+  .article-content > div {
+    display: flow-root;
+  }
+
+  .article-content :where(p),
+  .article-content :where(ul),
+  .article-content :where(ol),
+  .article-content :where(blockquote),
+  .article-content :where(.prose-code-block),
+  .article-content :where(.prose-image),
+  .article-content :where(.relative.my-5.overflow-x-auto),
+  .article-content :where(.prose-table-scroll),
+  .article-content :where(hr) {
+    margin-block: 1.25rem;
+  }
+
+  .article-content :where(ul, ol) {
+    padding-left: 1.4rem;
+  }
+
+  .article-content :where(li + li) {
+    margin-top: 0.35rem;
+  }
+
+  .article-content :where(h1) {
+    display: none;
+  }
+
+  .article-content :where(h1 + ul:has(a[href^='#'])) {
+    display: none;
+  }
+
+  .article-content :where(h1 + blockquote + ul:has(a[href^='#'])) {
+    display: none;
+  }
+
   .prose :where(h1) {
     font-size: 2.2rem;
     letter-spacing: -0.02em;
+    line-height: 1.15;
   }
 
+  .article-content :where(h2),
   .prose :where(h2) {
     margin-top: 2rem;
     font-weight: 600;
   }
 
+  .article-content :where(h2, h3, h4),
+  .prose :where(h2, h3, h4) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    scroll-margin-top: 7rem;
+    color: var(--gh-fg-default);
+  }
+
+  .article-content :where(h2, h3, h4):focus,
+  .prose :where(h2, h3, h4):focus {
+    border-radius: 0.75rem;
+    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 42%, transparent);
+    outline-offset: 0.35rem;
+  }
+
+  .article-content :where(h2 a, h3 a, h4 a),
+  .prose :where(h2 a, h3 a, h4 a) {
+    display: inline-flex;
+    max-width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    border-radius: 0.65rem;
+    padding-inline: 0.2rem;
+    color: inherit;
+    text-decoration: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .article-content
+    :where(h2 a:hover, h3 a:hover, h4 a:hover, h2 a:focus-visible, h3 a:focus-visible, h4 a:focus-visible),
+  .prose :where(h2 a:hover, h3 a:hover, h4 a:hover, h2 a:focus-visible, h3 a:focus-visible, h4 a:focus-visible) {
+    color: var(--gh-accent-emphasis);
+    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 42%, transparent);
+    outline-offset: 2px;
+  }
+
+  .article-content :where(p, li),
+  .prose :where(p, li) {
+    line-height: 1.85;
+  }
+
+  .article-content :where(p, li, blockquote, pre, table, img):focus,
+  .prose :where(p, li, blockquote, pre, table, img):focus {
+    border-radius: 0.75rem;
+    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 34%, transparent);
+    outline-offset: 0.35rem;
+  }
+
+  .article-content :where(a),
+  .prose :where(a) {
+    color: var(--gh-accent-emphasis);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--gh-accent-emphasis) 35%, transparent 65%);
+    text-underline-offset: 0.18em;
+    overflow-wrap: anywhere;
+    transition: text-decoration-color 0.2s ease;
+  }
+
+  .article-content :where(a:hover),
+  .prose :where(a:hover) {
+    text-decoration-color: var(--gh-accent-emphasis);
+  }
+
+  .article-content :where(li > a[href^='#']),
+  .prose :where(li > a[href^='#']) {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    border-radius: 0.65rem;
+    padding-inline: 0.2rem;
+    text-decoration-thickness: 0.08em;
+  }
+
+  .article-content :where(li > a[href^='#']:focus-visible),
+  .prose :where(li > a[href^='#']:focus-visible) {
+    background: var(--gh-accent-subtle);
+    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 42%, transparent);
+    outline-offset: 2px;
+  }
+
+  .article-content :where(strong),
+  .prose :where(strong) {
+    color: var(--muted-strong);
+    font-weight: 650;
+  }
+
+  .article-content :where(blockquote),
+  .prose :where(blockquote) {
+    margin-inline: 0;
+    border-left: 0.25rem solid color-mix(in srgb, var(--gh-accent-emphasis) 65%, transparent);
+    border-radius: 0 1rem 1rem 0;
+    background: color-mix(in srgb, var(--gh-accent-subtle) 36%, transparent 64%);
+    padding: 1rem 1.15rem;
+    color: var(--muted-strong);
+    font-style: normal;
+  }
+
+  .article-content :where(blockquote p),
+  .prose :where(blockquote p) {
+    margin-block: 0.25rem;
+  }
+
+  .article-content :where(hr),
+  .prose :where(hr) {
+    margin-block: 2.5rem;
+    border: 0;
+    border-top: 1px solid var(--surface-border);
+  }
+
+  .article-content :where(code),
   .prose :where(code) {
+    max-width: 100%;
     background: var(--gh-code-inline-bg);
     border: 1px solid var(--gh-code-inline-border);
     border-radius: 0.45rem;
     padding: 0.1rem 0.4rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
+  .article-content :where(pre),
   .prose :where(pre) {
     background: var(--gh-code-bg);
     border: 1px solid var(--gh-code-border);
     border-radius: 1rem;
     padding: 1.25rem;
+    overflow-x: auto;
+  }
+
+  .article-content :where(:not(pre) > code)::before,
+  .article-content :where(:not(pre) > code)::after,
+  .prose :where(:not(pre) > code)::before,
+  .prose :where(:not(pre) > code)::after {
+    content: none;
+  }
+
+  .article-content :where(.relative.my-5.overflow-x-auto),
+  .article-content :where(.prose-table-scroll) {
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: var(--panel-bg);
+    box-shadow: 0 18px 45px -34px rgba(15, 23, 42, 0.45);
+  }
+
+  .article-content :where(table),
+  .prose :where(table) {
+    width: 100%;
+    max-width: 100%;
+    min-width: max-content;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border-radius: 1rem;
+    background: transparent;
+  }
+
+  .article-content :where(thead),
+  .prose :where(thead) {
+    background: var(--panel-bg-soft);
+  }
+
+  .article-content :where(th, td),
+  .prose :where(th, td) {
+    min-width: 8rem;
+    border-bottom: 1px solid var(--surface-border);
+    padding: 0.8rem 0.95rem;
+    vertical-align: top;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .article-content :where(th),
+  .prose :where(th) {
+    color: var(--muted-strong);
+    font-weight: 650;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .article-content :where(td),
+  .prose :where(td) {
+    color: var(--gh-fg-default);
+  }
+
+  .article-content :where(tr:last-child td),
+  .prose :where(tr:last-child td) {
+    border-bottom: 0;
+  }
+
+  .article-content :where(th:not(:last-child), td:not(:last-child)),
+  .prose :where(th:not(:last-child), td:not(:last-child)) {
+    border-right: 1px solid var(--surface-border);
+  }
+
+  .article-content :where(img),
+  .prose :where(img) {
+    height: auto;
+  }
+
+  @media (max-width: 640px) {
+    .article-content,
+    .prose {
+      max-width: 100%;
+    }
+
+    .prose :where(h1) {
+      font-size: 1.9rem;
+    }
+
+    .article-content :where(blockquote),
+    .prose :where(blockquote) {
+      padding: 0.9rem 1rem;
+    }
+
+    .article-content :where(th, td),
+    .prose :where(th, td) {
+      min-width: 9.5rem;
+      padding: 0.7rem 0.8rem;
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+
+    .app-card:hover {
+      transform: none;
+    }
+  }
+
+  @media print {
+    html,
+    html[data-theme],
+    body,
+    .app-shell {
+      background: #fff !important;
+      color: #111 !important;
+      color-scheme: light !important;
+      --gh-fg-default: #111;
+      --gh-fg-muted: #444;
+      --gh-fg-subtle: #666;
+      --muted: #444;
+      --muted-strong: #111;
+    }
+
+    body::before,
+    body::after,
+    .skip-link,
+    .app-header,
+    .app-footer,
+    aside,
+    button,
+    .article-reading-progress,
+    .article-utility-strip,
+    .article-resume-prompt,
+    .article-mobile-toc,
+    [data-article-recovery],
+    [role='dialog'],
+    [aria-label='返回文章顶部'] {
+      display: none !important;
+    }
+
+    .app-shell,
+    .app-main {
+      display: block !important;
+      min-height: auto !important;
+      width: auto !important;
+      max-width: none !important;
+      padding: 0 !important;
+      color: #111 !important;
+    }
+
+    .app-card,
+    .app-card-soft,
+    .app-card-static,
+    .article-content {
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+
+    .app-card::after,
+    .app-card-soft::after {
+      content: none !important;
+    }
+
+    .article-content,
+    .prose {
+      max-width: none !important;
+      font-size: 11pt !important;
+      line-height: 1.55 !important;
+    }
+
+    .article-content :where(h1, h2, h3, h4),
+    .prose :where(h1, h2, h3, h4) {
+      break-after: avoid;
+      page-break-after: avoid;
+      color: #111 !important;
+    }
+
+    .article-content :where(p, li),
+    .prose :where(p, li) {
+      line-height: 1.55 !important;
+    }
+
+    .article-content :where(a),
+    .prose :where(a) {
+      color: #111 !important;
+      text-decoration: underline;
+    }
+
+    .article-content :where(pre, blockquote, table, img),
+    .prose :where(pre, blockquote, table, img) {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .article-content :where(pre),
+    .prose :where(pre) {
+      white-space: pre-wrap;
+      border: 1px solid #bbb !important;
+      background: #f7f7f7 !important;
+      color: #111 !important;
+    }
+
+    .article-content :where(code),
+    .prose :where(code) {
+      border-color: #ccc !important;
+      background: #f7f7f7 !important;
+      color: #111 !important;
+    }
+
+    .article-content :where(table),
+    .prose :where(table) {
+      min-width: 0 !important;
+      border-collapse: collapse !important;
+    }
+
+    .article-content :where(th, td),
+    .prose :where(th, td) {
+      min-width: 0 !important;
+      border: 1px solid #ccc !important;
+      color: #111 !important;
+    }
+
+    .article-content :where(img),
+    .prose :where(img) {
+      max-width: 100% !important;
+    }
   }
 }
 
@@ -371,4 +792,17 @@ html[data-theme='dark'] {
   --page-noise-alpha: 0;
   --panel-gradient: linear-gradient(0deg, transparent, transparent);
   --card-glass-overlay: rgba(34, 39, 49, 0.8);
+}
+
+@media print {
+  html,
+  html[data-theme],
+  body,
+  .app-shell {
+    background: #fff !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    color: #111 !important;
+    transition: none !important;
+  }
 }
