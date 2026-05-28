@@ -37,3 +37,4 @@ vite.config.ts.timestamp-*.mjs
 config.ts.timestamp-*.mjs
 .vite-inspect
 .playwright-cli
+.playwright-mcp
