@@ -1,7 +1,7 @@
 packages:
   - apps/*
   - packages/*
-  - blog-archived
+  - blog
   - '!**/test/**'
 shamefullyHoist: true
 onlyBuiltDependencies:

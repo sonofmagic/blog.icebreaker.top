@@ -165,7 +165,7 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
 
-  blog-archived:
+  blog:
     dependencies:
       '@iconify/tailwind':
         specifier: ^1.2.0
