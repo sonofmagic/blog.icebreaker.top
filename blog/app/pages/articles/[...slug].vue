@@ -23,6 +23,14 @@ if (!contentPath) {
   throw createError({ statusCode: 404, message: '文章不存在' })
 }
 
+function restoreRecentReading(items?: typeof recentItems.value) {
+  if (!items?.length) {
+    return
+  }
+
+  restoreReadingHistory(items)
+}
+
 function parseMeta(entry: Record<string, any>) {
   if (typeof entry.meta === 'string') {
     try {
@@ -149,6 +157,61 @@ function buildTocLinksFromBody(body: MarkdownRoot | undefined | null): TocLink[]
   return normalize(links)
 }
 
+function normalizeShikiStyleText(value: string) {
+  return value
+    .replace(/,\s+/g, ',')
+    .replace(/\s*\{\s*/g, '{')
+    .replace(/:\s+/g, ':')
+    .replace(/;\s+/g, ';')
+    .replace(/;\}/g, '}')
+}
+
+function allowShikiStyleMismatch(node: unknown) {
+  if (!node || typeof node !== 'object') {
+    return
+  }
+
+  if (Array.isArray(node)) {
+    if (node[0] === 'style') {
+      if (!node[1] || typeof node[1] !== 'object' || Array.isArray(node[1])) {
+        node[1] = {}
+      }
+      const styleProps = node[1] as Record<string, string>
+      styleProps['data-allow-mismatch'] = 'children'
+      if (typeof node[2] === 'string' && node[2].includes('shiki')) {
+        node[2] = normalizeShikiStyleText(node[2])
+      }
+    }
+
+    for (const child of node) {
+      allowShikiStyleMismatch(child)
+    }
+    return
+  }
+
+  const record = node as Record<string, any>
+  if (record.tag === 'style') {
+    if (!record.props || typeof record.props !== 'object' || Array.isArray(record.props)) {
+      record.props = {}
+    }
+    record.props['data-allow-mismatch'] = 'children'
+    if (typeof record.value === 'string' && record.value.includes('shiki')) {
+      record.value = normalizeShikiStyleText(record.value)
+    }
+  }
+
+  if (Array.isArray(record.children)) {
+    for (const child of record.children) {
+      allowShikiStyleMismatch(child)
+    }
+  }
+  if (Array.isArray(record.value)) {
+    for (const child of record.value) {
+      allowShikiStyleMismatch(child)
+    }
+  }
+}
+
 const { data: article } = await useAsyncData(`article:${contentPath}`, async () => {
   const entry = await queryCollection('articles')
     .path(contentPath)
@@ -167,6 +230,7 @@ const { data: article } = await useAsyncData(`article:${contentPath}`, async () 
       body = null
     }
   }
+  allowShikiStyleMismatch(body)
   return {
     ...entry,
     ...meta,
@@ -223,6 +287,7 @@ const tocLinks = computed<TocLink[]>(() => {
 const hasToc = computed(() => tocLinks.value.length > 0)
 const isTocOpen = ref(false)
 const articleContentRef = ref<HTMLElement | null>(null)
+const articleTopSentinelRef = ref<HTMLElement | null>(null)
 const articleRecoveryRef = ref<HTMLElement | null>(null)
 const tocDialogRef = ref<HTMLElement | null>(null)
 const readingProgress = ref(0)
@@ -238,6 +303,8 @@ let previousTocActiveElement: HTMLElement | null = null
 let previousTocBodyOverflow = ''
 let shouldRestoreTocFocus = true
 let articleRecoveryObserver: IntersectionObserver | undefined
+let articleTopObserver: IntersectionObserver | undefined
+let activeHeadingObserver: IntersectionObserver | undefined
 const previousArticle = computed(() => adjacent.value?.prev ?? null)
 const nextArticle = computed(() => adjacent.value?.next ?? null)
 
@@ -376,13 +443,20 @@ const shareStatusLabel = computed(() => {
   return ''
 })
 
+function saveReadingPosition(scrollTop: number, progress: number) {
+  const path = article.value?.path
+  if (!path || progress < 2) {
+    return
+  }
+  updateReadingPosition(path, scrollTop, progress)
+}
+
 function scheduleReadingPositionSave(scrollTop: number, progress: number) {
   if (!import.meta.client) {
     return
   }
 
-  const path = article.value?.path
-  if (!path || progress < 2) {
+  if (!article.value?.path || progress < 2) {
     return
   }
 
@@ -390,12 +464,56 @@ function scheduleReadingPositionSave(scrollTop: number, progress: number) {
     clearTimeout(savePositionTimer)
   }
   savePositionTimer = setTimeout(() => {
-    updateReadingPosition(path, scrollTop, progress)
+    saveReadingPosition(scrollTop, progress)
   }, 350)
 }
 
-function updateActiveHeading() {
-  if (!import.meta.client || !articleContentRef.value || tocLinks.value.length === 0) {
+function getCurrentScrollProgress() {
+  if (!import.meta.client) {
+    return 0
+  }
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0
+  const articleElement = articleContentRef.value
+  if (articleElement) {
+    const rect = articleElement.getBoundingClientRect()
+    const articleTop = rect.top + scrollTop
+    const articleHeight = articleElement.scrollHeight
+    const start = Math.max(0, articleTop - 120)
+    const end = Math.max(start + 1, articleTop + articleHeight - (window.innerHeight * 0.65))
+    return Math.min(100, Math.max(0, ((scrollTop - start) / (end - start)) * 100))
+  }
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight
+  return scrollable > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollable) * 100)) : 0
+}
+
+function syncReadingState() {
+  if (!import.meta.client) {
+    return
+  }
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0
+  readingProgress.value = getCurrentScrollProgress()
+  hasScrolled.value = scrollTop > 480
+  scheduleReadingPositionSave(scrollTop, readingProgress.value)
+}
+
+function persistReadingStateNow() {
+  if (!import.meta.client) {
+    return
+  }
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0
+  readingProgress.value = getCurrentScrollProgress()
+  hasScrolled.value = scrollTop > 480
+  saveReadingPosition(scrollTop, readingProgress.value)
+}
+
+function setupActiveHeadingObserver() {
+  if (!import.meta.client) {
+    return
+  }
+
+  activeHeadingObserver?.disconnect()
+
+  if (!articleContentRef.value || tocLinks.value.length === 0) {
     activeHeadingId.value = null
     return
   }
@@ -409,42 +527,32 @@ function updateActiveHeading() {
     return
   }
 
-  const readingLine = Math.min(window.innerHeight * 0.38, 280)
-  let currentHeading = headings[0]!
+  activeHeadingId.value = headings[0]!.id
+  const visibleHeadings = new Map<string, number>()
+  activeHeadingObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const id = (entry.target as HTMLElement).id
+      if (entry.isIntersecting) {
+        visibleHeadings.set(id, entry.boundingClientRect.top)
+      }
+      else {
+        visibleHeadings.delete(id)
+      }
+    }
+
+    const next = Array.from(visibleHeadings.entries())
+      .sort((a, b) => Math.abs(a[1]) - Math.abs(b[1]))[0]?.[0]
+    if (next) {
+      activeHeadingId.value = next
+    }
+  }, {
+    rootMargin: '-18% 0px -68% 0px',
+    threshold: [0, 1],
+  })
 
   for (const heading of headings) {
-    if (heading.getBoundingClientRect().top <= readingLine) {
-      currentHeading = heading
-    }
-    else {
-      break
-    }
+    activeHeadingObserver.observe(heading)
   }
-
-  activeHeadingId.value = currentHeading.id
-}
-
-function updateReadingProgress() {
-  if (!import.meta.client) {
-    return
-  }
-  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0
-  const articleElement = articleContentRef.value
-  if (articleElement) {
-    const rect = articleElement.getBoundingClientRect()
-    const articleTop = rect.top + scrollTop
-    const articleHeight = articleElement.scrollHeight
-    const start = Math.max(0, articleTop - 120)
-    const end = Math.max(start + 1, articleTop + articleHeight - (window.innerHeight * 0.65))
-    readingProgress.value = Math.min(100, Math.max(0, ((scrollTop - start) / (end - start)) * 100))
-  }
-  else {
-    const scrollable = document.documentElement.scrollHeight - window.innerHeight
-    readingProgress.value = scrollable > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollable) * 100)) : 0
-  }
-  hasScrolled.value = scrollTop > 480
-  updateActiveHeading()
-  scheduleReadingPositionSave(scrollTop, readingProgress.value)
 }
 
 function getPreferredScrollBehavior(): ScrollBehavior {
@@ -704,12 +812,41 @@ function setupArticleRecoveryObserver() {
   articleRecoveryObserver.observe(articleRecoveryRef.value)
 }
 
+function setupArticleTopObserver() {
+  if (!import.meta.client) {
+    return
+  }
+
+  articleTopObserver?.disconnect()
+
+  if (!articleTopSentinelRef.value) {
+    hasScrolled.value = false
+    return
+  }
+
+  articleTopObserver = new IntersectionObserver(
+    ([entry]) => {
+      hasScrolled.value = !entry?.isIntersecting
+    },
+    {
+      rootMargin: '-512px 0px 0px 0px',
+      threshold: 0,
+    },
+  )
+  articleTopObserver.observe(articleTopSentinelRef.value)
+}
+
 onMounted(() => {
-  updateReadingProgress()
+  syncReadingState()
   recordCurrentArticle()
-  void nextTick(setupArticleRecoveryObserver)
-  window.addEventListener('scroll', updateReadingProgress, { passive: true })
-  window.addEventListener('resize', updateReadingProgress)
+  void nextTick(() => {
+    setupArticleTopObserver()
+    setupArticleRecoveryObserver()
+    setupActiveHeadingObserver()
+  })
+  window.addEventListener('resize', syncReadingState)
+  document.addEventListener('visibilitychange', persistReadingStateNow)
+  window.addEventListener('pagehide', persistReadingStateNow)
 })
 
 watch(
@@ -717,8 +854,10 @@ watch(
   async () => {
     recordCurrentArticle()
     await nextTick()
-    updateReadingProgress()
+    syncReadingState()
+    setupArticleTopObserver()
     setupArticleRecoveryObserver()
+    setupActiveHeadingObserver()
   },
 )
 
@@ -750,10 +889,13 @@ onBeforeUnmount(() => {
   if (!import.meta.client) {
     return
   }
-  window.removeEventListener('scroll', updateReadingProgress)
-  window.removeEventListener('resize', updateReadingProgress)
+  window.removeEventListener('resize', syncReadingState)
+  document.removeEventListener('visibilitychange', persistReadingStateNow)
+  window.removeEventListener('pagehide', persistReadingStateNow)
   window.removeEventListener('keydown', handleTocKeydown)
+  articleTopObserver?.disconnect()
   articleRecoveryObserver?.disconnect()
+  activeHeadingObserver?.disconnect()
   document.body.style.overflow = previousTocBodyOverflow
   if (shareResetTimer) {
     clearTimeout(shareResetTimer)
@@ -807,13 +949,13 @@ const tocUi = {
   container: 'lg:gap-3',
   content: 'lg:flex lg:flex-col lg:gap-1.5 lg:!overflow-visible',
   list: 'space-y-1 text-sm text-muted leading-relaxed',
-  listWithChildren: 'mt-2 space-y-1 border-l border-[--surface-border]/60 pl-3',
+  listWithChildren: 'mt-2 space-y-1 border-l border-[var(--surface-border)]/60 pl-3',
   item: 'max-w-full overflow-hidden',
   itemWithChildren: 'max-w-full overflow-hidden',
-  link: 'group flex min-h-11 max-w-full items-start rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[--panel-bg-soft] hover:text-[--gh-accent-emphasis] lg:min-h-0 lg:py-1.5',
+  link: 'group flex min-h-11 max-w-full items-start rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--panel-bg-soft)] hover:text-[var(--gh-accent-emphasis)] lg:min-h-0 lg:py-1.5',
   linkText: 'line-clamp-2 min-w-0 break-words text-left group-focus-visible:line-clamp-none group-hover:line-clamp-none',
-  activeLink: 'bg-[--gh-accent-subtle] text-[--gh-accent-emphasis] font-medium',
-  indicator: 'bg-[--gh-accent-subtle]',
+  activeLink: 'bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] font-medium',
+  indicator: 'bg-[var(--gh-accent-subtle)]',
 }
 
 function focusHeadingAfterTocMove(id?: string) {
@@ -857,6 +999,7 @@ function handleTocMove(id?: string) {
 
 <template>
   <div class="relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
+    <span ref="articleTopSentinelRef" class="sr-only" aria-hidden="true" />
     <div class="article-reading-progress fixed inset-x-0 top-0 z-50 h-1 bg-transparent">
       <div
         role="progressbar"
@@ -864,8 +1007,7 @@ function handleTocMove(id?: string) {
         aria-valuemin="0"
         aria-valuemax="100"
         :aria-valuenow="Math.round(readingProgress)"
-        class="h-full bg-[--gh-accent-emphasis] transition-[width] duration-150 ease-out"
-        :style="{ width: `${readingProgress}%` }"
+        class="article-reading-progress__bar h-full bg-[var(--gh-accent-emphasis)]"
       />
     </div>
 
@@ -882,30 +1024,30 @@ function handleTocMove(id?: string) {
 
       <div
         v-if="articleDetails"
-        class="article-utility-strip rounded-3xl border border-[--surface-border]/60 bg-[--panel-bg] px-4 py-4 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.45)] sm:px-5"
+        class="article-utility-strip rounded-2xl border border-[var(--surface-border)]/50 bg-[var(--panel-bg)] px-3 py-3 shadow-[0_14px_38px_-34px_rgba(15,23,42,0.36)] sm:px-5 sm:py-4"
       >
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-[--panel-bg-soft] px-3 py-1.5">
-              <UIcon name="i-lucide-calendar-days" class="size-4 text-[--gh-accent-emphasis]" />
+          <div class="article-utility-scroll flex items-center gap-2 overflow-x-auto text-xs text-muted lg:flex-wrap">
+            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--panel-bg-soft)] px-3 py-1.5">
+              <UIcon name="i-lucide-calendar-days" class="size-4 text-[var(--gh-accent-emphasis)]" />
               {{ articleDetails.date }}
             </span>
             <span
               v-for="meta in articleDetails.readingMeta"
               :key="meta"
-              class="inline-flex items-center gap-1.5 rounded-full bg-[--panel-bg-soft] px-3 py-1.5"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--panel-bg-soft)] px-3 py-1.5"
             >
-              <UIcon name="i-lucide-book-open-check" class="size-4 text-[--gh-accent-emphasis]" />
+              <UIcon name="i-lucide-book-open-check" class="size-4 text-[var(--gh-accent-emphasis)]" />
               {{ meta }}
             </span>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="article-utility-scroll flex items-center gap-2 overflow-x-auto lg:flex-wrap lg:justify-end">
             <button
               v-for="tag in articleDetails.tags"
               :key="tag"
               type="button"
-              class="inline-flex min-h-11 items-center rounded-full border border-[--surface-border]/70 bg-[--panel-bg-soft] px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-[--gh-accent-emphasis]/70 hover:text-[--gh-accent-emphasis]"
+              class="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
               :aria-label="`查看标签「${tag}」下的文章`"
               @click="openTag(tag)"
             >
@@ -913,7 +1055,7 @@ function handleTocMove(id?: string) {
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[--surface-border]/70 bg-[--panel-bg-soft] px-3 py-2 text-xs font-medium text-[--gh-accent-emphasis] transition-colors hover:border-[--gh-accent-emphasis]/70 hover:bg-[--gh-accent-subtle]"
+              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
               :aria-label="shareButtonLabel"
               @click="shareCurrentArticle"
             >
@@ -922,7 +1064,7 @@ function handleTocMove(id?: string) {
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[--surface-border]/70 bg-[--panel-bg-soft] px-3 py-2 text-xs font-medium text-[--gh-accent-emphasis] transition-colors hover:border-[--gh-accent-emphasis]/70 hover:bg-[--gh-accent-subtle]"
+              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
               :aria-label="copyButtonLabel"
               @click="copyCurrentUrl"
             >
@@ -931,7 +1073,7 @@ function handleTocMove(id?: string) {
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[--surface-border]/70 bg-[--panel-bg-soft] px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-[--gh-accent-emphasis]/70 hover:bg-[--gh-accent-subtle] hover:text-[--gh-accent-emphasis]"
+              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)]"
               :aria-label="printButtonLabel"
               @click="printArticle"
             >
@@ -952,7 +1094,7 @@ function handleTocMove(id?: string) {
       <ClientOnly>
         <div
           v-if="shouldShowResumePrompt"
-          class="article-resume-prompt flex flex-col gap-3 rounded-2xl border border-[--gh-accent-emphasis]/30 bg-[--gh-accent-subtle] px-4 py-4 text-sm text-[--gh-accent-emphasis] sm:flex-row sm:items-center sm:justify-between"
+          class="article-resume-prompt flex flex-col gap-3 rounded-2xl border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-4 py-4 text-sm text-[var(--gh-accent-emphasis)] sm:flex-row sm:items-center sm:justify-between"
           role="status"
         >
           <div class="inline-flex items-start gap-2 leading-6">
@@ -962,14 +1104,14 @@ function handleTocMove(id?: string) {
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
               type="button"
-              class="inline-flex min-h-11 items-center justify-center rounded-full border border-[--gh-accent-emphasis]/40 bg-[--panel-bg] px-4 py-2 text-sm font-medium transition-colors hover:border-[--gh-accent-emphasis] hover:bg-[--gh-accent-subtle]"
+              class="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--gh-accent-emphasis)]/40 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)]"
               @click="scrollToResumePosition"
             >
               继续阅读
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-[--panel-bg] hover:text-[--gh-accent-emphasis]"
+              class="inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)]"
               @click="dismissResumePrompt"
             >
               稍后再说
@@ -980,12 +1122,12 @@ function handleTocMove(id?: string) {
 
       <header
         v-if="article"
-        class="article-hero rounded-3xl border border-[--surface-border]/60 bg-[--panel-bg] px-5 py-6 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.45)] sm:px-7 sm:py-8"
+        class="article-hero rounded-2xl border border-[var(--surface-border)]/50 bg-[var(--panel-bg)] px-5 py-6 shadow-[0_14px_38px_-34px_rgba(15,23,42,0.36)] sm:px-7 sm:py-8"
       >
-        <p class="text-xs font-semibold uppercase tracking-[0.32em] text-[--gh-accent-emphasis]">
-          Article
+        <p class="text-xs font-medium text-[var(--gh-accent-emphasis)]">
+          文章
         </p>
-        <h1 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-[--gh-fg-default] sm:text-4xl lg:text-5xl">
+        <h1 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-[var(--gh-fg-default)] sm:text-4xl lg:text-5xl">
           {{ articleTitle }}
         </h1>
         <p
@@ -1002,19 +1144,19 @@ function handleTocMove(id?: string) {
 
       <div
         v-else-if="isArticleMissing"
-        class="app-card app-card-static rounded-3xl p-6 sm:p-8 lg:p-10"
+        class="app-card app-card-static rounded-2xl p-6 sm:p-8 lg:p-10"
         role="status"
         aria-live="polite"
       >
         <div class="flex flex-col gap-6">
-          <div class="inline-flex w-fit items-center gap-2 text-[0.65rem] uppercase tracking-[0.3em] text-muted">
-            <UBadge variant="soft" color="primary" class="text-[0.65rem] uppercase tracking-[0.25em]">
-              Not found
+          <div class="inline-flex w-fit items-center gap-2 text-xs text-muted">
+            <UBadge variant="soft" color="primary" class="rounded-lg text-xs font-medium">
+              未找到
             </UBadge>
             <span>404</span>
           </div>
           <div class="space-y-3">
-            <h1 class="text-2xl font-semibold leading-tight tracking-tight text-[--gh-fg-default] sm:text-3xl">
+            <h1 class="text-2xl font-semibold leading-tight tracking-tight text-[var(--gh-fg-default)] sm:text-3xl">
               这篇文章暂时找不到
             </h1>
             <p class="max-w-2xl text-sm leading-7 text-muted sm:text-base">
@@ -1035,7 +1177,7 @@ function handleTocMove(id?: string) {
               variant="ghost"
               color="neutral"
               icon="i-lucide-search"
-              class="min-h-11 justify-center rounded-full border border-[--surface-border]/70"
+              class="min-h-11 justify-center rounded-full border border-[var(--surface-border)]/70"
               aria-label="回到文章归档并聚焦搜索"
             >
               搜索其他文章
@@ -1048,7 +1190,7 @@ function handleTocMove(id?: string) {
               title="最近阅读"
               compact
               @clear="clearReadingHistory"
-              @restore="restoreReadingHistory"
+              @restore="restoreRecentReading"
             />
           </ClientOnly>
         </div>
@@ -1069,7 +1211,7 @@ function handleTocMove(id?: string) {
       <div
         v-if="article"
         ref="articleRecoveryRef"
-        class="mt-10 space-y-5 border-t border-[--surface-border]/60 pt-6"
+        class="mt-10 space-y-5 border-t border-[var(--surface-border)]/60 pt-6"
         data-article-recovery
       >
         <div
@@ -1079,14 +1221,14 @@ function handleTocMove(id?: string) {
           <ULink
             v-if="previousArticle"
             :to="previousArticle.path"
-            class="group flex min-h-32 flex-col justify-between gap-4 rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] px-4 py-4 transition-colors hover:border-[--gh-accent-emphasis]/60 hover:bg-[--panel-bg-soft]"
+            class="group flex min-h-32 flex-col justify-between gap-4 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)]"
             :aria-label="`上一篇：${previousArticle.title}`"
           >
-            <span class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-muted/70">
+            <span class="inline-flex items-center gap-2 text-xs font-medium text-muted">
               <UIcon name="i-lucide-arrow-left" class="size-4" />
               上一篇
             </span>
-            <span class="text-sm font-semibold leading-snug text-[--gh-fg-default] group-hover:text-[--gh-accent-emphasis]">
+            <span class="text-sm font-semibold leading-snug text-[var(--gh-fg-default)] group-hover:text-[var(--gh-accent-emphasis)]">
               {{ previousArticle.title }}
             </span>
           </ULink>
@@ -1094,26 +1236,26 @@ function handleTocMove(id?: string) {
           <ULink
             v-if="nextArticle"
             :to="nextArticle.path"
-            class="group flex min-h-32 flex-col justify-between gap-4 rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] px-4 py-4 text-left transition-colors hover:border-[--gh-accent-emphasis]/60 hover:bg-[--panel-bg-soft] sm:text-right"
+            class="group flex min-h-32 flex-col justify-between gap-4 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 text-left transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)] sm:text-right"
             :aria-label="`下一篇：${nextArticle.title}`"
           >
-            <span class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-muted/70 sm:justify-end">
+            <span class="inline-flex items-center gap-2 text-xs font-medium text-muted sm:justify-end">
               下一篇
               <UIcon name="i-lucide-arrow-right" class="size-4" />
             </span>
-            <span class="text-sm font-semibold leading-snug text-[--gh-fg-default] group-hover:text-[--gh-accent-emphasis]">
+            <span class="text-sm font-semibold leading-snug text-[var(--gh-fg-default)] group-hover:text-[var(--gh-accent-emphasis)]">
               {{ nextArticle.title }}
             </span>
           </ULink>
         </div>
 
-        <section class="rounded-3xl border border-[--surface-border]/60 bg-[--panel-bg] px-4 py-5 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.45)] sm:px-5">
+        <section class="rounded-2xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-5 shadow-[0_14px_38px_-34px_rgba(15,23,42,0.38)] sm:px-5">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="space-y-1">
-              <p class="text-xs uppercase tracking-[0.3em] text-muted/70">
-                Continue
+              <p class="text-xs font-medium text-muted">
+                继续阅读
               </p>
-              <h2 class="text-base font-semibold text-[--gh-fg-default]">
+              <h2 class="text-base font-semibold text-[var(--gh-fg-default)]">
                 继续浏览相关笔记
               </h2>
             </div>
@@ -1135,7 +1277,7 @@ function handleTocMove(id?: string) {
                 color="neutral"
                 icon="i-lucide-search"
                 size="lg"
-                class="min-h-11 justify-center rounded-full border border-[--surface-border]/70"
+                class="min-h-11 justify-center rounded-full border border-[var(--surface-border)]/70"
                 aria-label="到文章归档搜索文章"
               >
                 搜索文章
@@ -1145,7 +1287,7 @@ function handleTocMove(id?: string) {
                 color="neutral"
                 icon="i-lucide-arrow-up"
                 size="lg"
-                class="min-h-11 justify-center rounded-full border border-[--surface-border]/70"
+                class="min-h-11 justify-center rounded-full border border-[var(--surface-border)]/70"
                 aria-label="回到文章顶部"
                 @click="scrollToTop"
               >
@@ -1159,31 +1301,31 @@ function handleTocMove(id?: string) {
 
     <aside
       v-if="hasToc"
-      class="sticky top-32 hidden h-fit max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden rounded-3xl border border-[--surface-border]/60 bg-[--panel-bg] p-5 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] lg:block"
+      class="sticky top-32 hidden h-fit max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden rounded-2xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] p-5 shadow-[0_18px_48px_-32px_rgba(15,23,42,0.42)] lg:block"
       aria-labelledby="article-toc-title"
     >
-      <div class="text-[0.65rem] uppercase tracking-[0.3em] text-muted/60">
-        Contents
+      <div class="text-xs font-medium text-muted">
+        目录
       </div>
       <h2 id="article-toc-title" class="mt-2 text-sm font-semibold tracking-wide text-muted-strong">
         文章目录
       </h2>
       <p
         v-if="activeHeadingLabel"
-        class="mt-2 line-clamp-2 text-xs leading-5 text-[--gh-accent-emphasis]"
+        class="mt-2 line-clamp-2 text-xs leading-5 text-[var(--gh-accent-emphasis)]"
       >
         正在阅读：{{ activeHeadingLabel }}
       </p>
       <div class="mt-4 -mr-2 pr-2">
         <ArticleTocList :links="tocLinks" :toc-ui="tocUi" :active-id="activeHeadingId" @move="handleTocMove" />
       </div>
-      <div class="mt-5 border-t border-[--surface-border]/60 pt-4">
+      <div class="mt-5 border-t border-[var(--surface-border)]/60 pt-4">
         <div class="flex items-center justify-between text-xs text-muted">
           <span>阅读进度</span>
           <span>{{ Math.round(readingProgress) }}%</span>
         </div>
         <div
-          class="mt-2 h-1.5 overflow-hidden rounded-full bg-[--panel-bg-soft]"
+          class="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--panel-bg-soft)]"
           role="progressbar"
           aria-label="侧边目录文章阅读进度"
           aria-valuemin="0"
@@ -1191,7 +1333,7 @@ function handleTocMove(id?: string) {
           :aria-valuenow="Math.round(readingProgress)"
         >
           <div
-            class="h-full rounded-full bg-[--gh-accent-emphasis] transition-[width] duration-150"
+            class="h-full rounded-full bg-[var(--gh-accent-emphasis)] transition-[width] duration-150"
             :style="{ width: `${readingProgress}%` }"
           />
         </div>
@@ -1202,7 +1344,7 @@ function handleTocMove(id?: string) {
       <button
         v-if="hasScrolled"
         type="button"
-        class="fixed bottom-5 right-5 z-40 hidden size-11 items-center justify-center rounded-full border border-[--surface-border]/70 bg-[--panel-bg] text-muted shadow-[0_18px_45px_-26px_rgba(15,23,42,0.55)] backdrop-blur transition-colors hover:border-[--gh-accent-emphasis]/70 hover:text-[--gh-accent-emphasis] lg:inline-flex"
+        class="fixed bottom-5 right-5 z-40 hidden size-11 items-center justify-center rounded-full border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted shadow-[0_18px_45px_-26px_rgba(15,23,42,0.55)] backdrop-blur transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)] lg:inline-flex"
         aria-label="返回文章顶部"
         @click="scrollToTop"
       >
@@ -1213,7 +1355,7 @@ function handleTocMove(id?: string) {
     <div v-if="shouldShowMobileTocButton" class="article-mobile-toc pointer-events-none lg:hidden">
       <div class="article-mobile-toc__button fixed z-40 pointer-events-auto">
         <UButton
-          class="pointer-events-auto min-h-11 min-w-11 rounded-full border border-[--gh-accent-emphasis]/60 bg-[--gh-accent-subtle] px-3 py-2 text-sm font-medium text-[--gh-accent-emphasis] shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur transition-colors duration-150 hover:border-[--gh-accent-emphasis] hover:bg-[rgba(31,111,235,0.18)] hover:text-[--gh-accent-emphasis] dark:hover:bg-[rgba(65,132,228,0.26)]"
+          class="pointer-events-auto min-h-11 min-w-11 rounded-full border border-[var(--gh-accent-emphasis)]/60 bg-[var(--gh-accent-subtle)] px-3 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur transition-colors duration-150 hover:border-[var(--gh-accent-emphasis)] hover:bg-[rgba(31,111,235,0.18)] hover:text-[var(--gh-accent-emphasis)] dark:hover:bg-[rgba(65,132,228,0.26)]"
           size="sm"
           :icon="isTocOpen ? 'i-lucide-x' : 'i-lucide-list-tree'"
           :aria-label="tocButtonLabel"
@@ -1236,7 +1378,7 @@ function handleTocMove(id?: string) {
         tabindex="-1"
         @click.self="closeToc"
       >
-        <div class="article-mobile-toc__panel mx-auto w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-3xl border border-[--surface-border]/80 bg-[--panel-bg] p-5 shadow-[0_24px_60px_-25px_rgba(15,23,42,0.6)] pointer-events-auto">
+        <div class="article-mobile-toc__panel mx-auto w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-2xl border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] p-5 shadow-[0_22px_56px_-28px_rgba(15,23,42,0.56)] pointer-events-auto">
           <div class="mb-4 flex items-center justify-between">
             <div class="min-w-0">
               <p id="mobile-toc-title" class="text-sm font-semibold text-muted-strong">
@@ -1244,7 +1386,7 @@ function handleTocMove(id?: string) {
               </p>
               <p
                 v-if="activeHeadingLabel"
-                class="mt-1 line-clamp-2 text-xs leading-5 text-[--gh-accent-emphasis]"
+                class="mt-1 line-clamp-2 text-xs leading-5 text-[var(--gh-accent-emphasis)]"
               >
                 正在阅读：{{ activeHeadingLabel }}
               </p>
@@ -1268,6 +1410,28 @@ function handleTocMove(id?: string) {
 </template>
 
 <style scoped>
+.article-reading-progress__bar {
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+@supports (animation-timeline: scroll()) {
+  .article-reading-progress__bar {
+    animation: article-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes article-progress {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .article-mobile-toc__button {
   bottom: max(1.25rem, env(safe-area-inset-bottom));
   right: max(1rem, env(safe-area-inset-right));
@@ -1275,5 +1439,13 @@ function handleTocMove(id?: string) {
 
 .article-mobile-toc__panel {
   margin-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem));
+}
+
+.article-utility-scroll {
+  scrollbar-width: none;
+}
+
+.article-utility-scroll::-webkit-scrollbar {
+  display: none;
 }
 </style>

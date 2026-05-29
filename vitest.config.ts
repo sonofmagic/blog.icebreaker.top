@@ -108,6 +108,7 @@ export default defineConfig(() => {
   return {
     test: {
       projects,
+      passWithNoTests: true,
       coverage: {
         enabled: true,
         skipFull: true,

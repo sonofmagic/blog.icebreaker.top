@@ -96,13 +96,20 @@ function updateCodeScrollability() {
   isCodeScrollable.value = element.scrollWidth > element.clientWidth + 1
 }
 
+function requestCodeScrollabilityUpdate() {
+  if (!import.meta.client) {
+    return
+  }
+  window.requestAnimationFrame(updateCodeScrollability)
+}
+
 onMounted(async () => {
   await nextTick()
   updateCodeScrollability()
-  window.addEventListener('resize', updateCodeScrollability, { passive: true })
+  window.addEventListener('resize', requestCodeScrollabilityUpdate, { passive: true })
 
   if ('ResizeObserver' in window && preElement.value) {
-    resizeObserver = new ResizeObserver(updateCodeScrollability)
+    resizeObserver = new ResizeObserver(requestCodeScrollabilityUpdate)
     resizeObserver.observe(preElement.value)
   }
 })
@@ -111,7 +118,7 @@ onBeforeUnmount(() => {
   if (resetTimer) {
     clearTimeout(resetTimer)
   }
-  window.removeEventListener('resize', updateCodeScrollability)
+  window.removeEventListener('resize', requestCodeScrollabilityUpdate)
   resizeObserver?.disconnect()
 })
 </script>
@@ -120,7 +127,7 @@ onBeforeUnmount(() => {
   <div class="prose-code-block">
     <div v-if="!hideHeader" class="prose-code-block__header">
       <div class="prose-code-block__label">
-        <UIcon name="i-lucide-terminal-square" class="size-4" />
+        <UIcon name="i-lucide-code-2" class="size-4" />
         <span>{{ languageLabel }}</span>
       </div>
       <button
@@ -155,12 +162,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .prose-code-block {
-  margin: 1.75rem 0;
+  margin: 1.6rem 0;
   overflow: hidden;
   border: 1px solid var(--gh-code-border);
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   background: var(--gh-code-bg);
-  box-shadow: 0 18px 45px -34px rgba(15, 23, 42, 0.5);
+  box-shadow: 0 14px 38px -34px rgba(15, 23, 42, 0.46);
 }
 
 .prose-code-block__header {
@@ -170,7 +177,7 @@ onBeforeUnmount(() => {
   gap: 0.75rem;
   border-bottom: 1px solid var(--gh-code-border);
   background: color-mix(in srgb, var(--panel-bg) 74%, transparent 26%);
-  padding: 0.65rem 0.75rem 0.65rem 1rem;
+  padding: 0.55rem 0.65rem 0.55rem 0.85rem;
 }
 
 .prose-code-block__label {
@@ -179,7 +186,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.5rem;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
@@ -191,16 +198,16 @@ onBeforeUnmount(() => {
 
 .prose-code-block__copy {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 2.35rem;
   flex-shrink: 0;
   align-items: center;
   gap: 0.4rem;
   border: 1px solid var(--surface-border);
   border-radius: 999px;
   background: var(--panel-bg);
-  padding: 0.55rem 0.85rem;
+  padding: 0.42rem 0.75rem;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
   transition:
     background-color 0.18s ease,
@@ -230,8 +237,8 @@ onBeforeUnmount(() => {
       1rem 100% no-repeat,
     linear-gradient(270deg, var(--gh-code-bg) 30%, color-mix(in srgb, var(--gh-code-bg) 0%, transparent)) right center /
       1rem 100% no-repeat,
-    linear-gradient(90deg, rgba(15, 23, 42, 0.18), transparent) left center / 0.75rem 100% no-repeat,
-    linear-gradient(270deg, rgba(15, 23, 42, 0.18), transparent) right center / 0.75rem 100% no-repeat,
+    linear-gradient(90deg, rgba(15, 23, 42, 0.12), transparent) left center / 0.65rem 100% no-repeat,
+    linear-gradient(270deg, rgba(15, 23, 42, 0.12), transparent) right center / 0.65rem 100% no-repeat,
     var(--gh-code-bg);
   background-attachment: local, local, scroll, scroll, scroll;
 }
@@ -253,8 +260,8 @@ onBeforeUnmount(() => {
   }
 
   .prose-code-block__copy {
-    min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
     justify-content: center;
     padding-inline: 0.65rem;
   }

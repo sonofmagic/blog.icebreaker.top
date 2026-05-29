@@ -43,22 +43,22 @@ if (import.meta.client) {
 </script>
 
 <template>
-  <div class="app-shell text-[--gh-fg-default] antialiased">
+  <div class="app-shell text-[var(--gh-fg-default)] antialiased">
     <a href="#main-content" class="skip-link">
       跳到正文
     </a>
 
     <header
-      class="app-header relative z-40 mx-auto mt-4 w-[min(100%,_1100px)] rounded-3xl border border-[--surface-border] bg-[--panel-bg-soft] px-4 py-3 shadow-sm backdrop-blur-md transition-all duration-200 sm:top-6 sm:mt-6 sm:px-6 sm:py-4 md:sticky"
+      class="app-header relative z-40 mx-auto mt-3 w-[min(calc(100%-1.5rem),_1100px)] rounded-2xl border border-[var(--surface-border)] bg-[var(--panel-bg-soft)] px-3 py-2 shadow-sm backdrop-blur-md transition-all duration-200 sm:top-5 sm:mt-5 sm:px-5 sm:py-3 md:sticky"
     >
-      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-        <div class="flex items-center justify-between gap-3 md:justify-start md:gap-6">
+      <div class="flex flex-col gap-1.5 sm:gap-2.5 md:flex-row md:items-center md:justify-between md:gap-4">
+        <div class="flex items-center justify-between gap-2 md:justify-start md:gap-6">
           <ULink
             to="/"
-            class="flex min-h-11 items-center gap-3 text-muted-strong transition hover:text-[--gh-accent-emphasis]"
+            class="flex min-h-10 items-center gap-2.5 text-muted-strong transition hover:text-[var(--gh-accent-emphasis)]"
             aria-label="回到 icebreaker / notes 文章归档"
           >
-            <span class="flex size-11 items-center justify-center rounded-2xl bg-[--gh-accent-subtle] text-[--gh-accent-emphasis] shadow-sm">
+            <span class="flex size-10 items-center justify-center rounded-xl bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] shadow-sm sm:size-11 sm:rounded-2xl">
               <UIcon name="i-lucide-octagon" class="size-5" />
             </span>
             <span class="flex flex-col text-sm leading-tight">
@@ -78,7 +78,7 @@ if (import.meta.client) {
               size="sm"
               variant="ghost"
               :icon="link.icon"
-              class="size-11 rounded-full !px-0 !py-0 flex items-center justify-center text-lg text-muted hover:text-[--gh-accent-emphasis]"
+              class="hidden size-10 rounded-full !px-0 !py-0 items-center justify-center text-base text-muted hover:text-[var(--gh-accent-emphasis)] sm:flex"
               :aria-label="link.ariaLabel"
               :title="link.label"
             >
@@ -88,7 +88,7 @@ if (import.meta.client) {
         </div>
 
         <div class="flex items-center justify-between gap-3">
-          <nav class="flex items-center gap-1 rounded-full bg-[--panel-bg-soft] p-1 shadow-sm" aria-label="主要导航">
+          <nav class="flex items-center gap-1 rounded-full bg-[var(--panel-bg-soft)] p-1 shadow-sm" aria-label="主要导航">
             <UButton
               v-for="link in navLinks"
               :key="link.to"
@@ -97,7 +97,7 @@ if (import.meta.client) {
               :color="isActiveLink(link) ? 'primary' : 'neutral'"
               :icon="link.icon"
               size="sm"
-              class="min-h-11 rounded-full px-4"
+              class="min-h-9 rounded-full px-3 sm:min-h-11 sm:px-4"
               :aria-current="isActiveLink(link) ? 'page' : undefined"
             >
               {{ link.label }}
@@ -115,7 +115,7 @@ if (import.meta.client) {
               size="sm"
               variant="ghost"
               :icon="link.icon"
-              class="size-11 rounded-full !px-0 !py-0 flex items-center justify-center text-lg text-muted hover:text-[--gh-accent-emphasis]"
+              class="size-11 rounded-full !px-0 !py-0 flex items-center justify-center text-lg text-muted hover:text-[var(--gh-accent-emphasis)]"
               :aria-label="link.ariaLabel"
               :title="link.label"
             >
@@ -126,18 +126,17 @@ if (import.meta.client) {
       </div>
     </header>
 
-    <main id="main-content" tabindex="-1" class="app-main mx-auto w-[min(100%,_1100px)] flex-1 py-12">
+    <main id="main-content" tabindex="-1" class="app-main mx-auto w-[min(calc(100%-1.5rem),_1100px)] flex-1 py-8 sm:py-10 lg:py-12">
       <UContainer class="max-w-none">
         <slot />
       </UContainer>
     </main>
 
-    <footer class="app-footer mx-auto mb-10 w-[min(100%,_1100px)] rounded-3xl px-6 py-4">
+    <footer class="app-footer mx-auto mb-8 w-[min(calc(100%-1.5rem),_1100px)] rounded-2xl px-5 py-4 sm:mb-10 sm:px-6">
       <div class="flex flex-col items-start gap-3 text-xs text-muted md:flex-row md:items-center md:justify-between">
-        <span>© {{ currentYear }} icebreaker · 保持真诚与松弛</span>
+        <span>© {{ currentYear }} icebreaker。保持真诚与松弛</span>
         <span class="flex items-center gap-2">
-          <UIcon name="i-lucide-sparkles" class="size-4 text-[--gh-accent-emphasis]" />
-          <span>Made with Nuxt · 支持浅色 / 深色主题</span>
+          <span>Made with Nuxt，支持浅色 / 深色主题</span>
         </span>
       </div>
     </footer>

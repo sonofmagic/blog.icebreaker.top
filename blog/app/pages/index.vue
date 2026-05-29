@@ -175,6 +175,9 @@ const recentArticles = computed(() => {
     })
     .filter(item => articleByPath.has(item.path))
 })
+const pendingRecentReadingRestore = ref<typeof recentArticles.value>([])
+const recentReadingStatusMessage = ref('')
+const recentReadingPanelItems = computed(() => recentReadingStatusMessage.value ? [] : recentArticles.value)
 
 const MAX_VISIBLE_TAGS = 10
 const showAllTags = ref(false)
@@ -199,6 +202,7 @@ const resultsSummaryRef = ref<HTMLElement | null>(null)
 let focusedArticleTimer: ReturnType<typeof setTimeout> | undefined
 let searchTargetTimer: ReturnType<typeof setTimeout> | undefined
 let copyFilterResetTimer: ReturnType<typeof setTimeout> | undefined
+let recentReadingStatusTimer: ReturnType<typeof setTimeout> | undefined
 
 const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleArticleLimit.value))
 const hiddenArticleCount = computed(() => Math.max(filteredArticles.value.length - visibleArticles.value.length, 0))
@@ -369,25 +373,25 @@ useSiteSeo(() => ({
 }))
 
 const tagButtonBaseClass = [
-  'inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium tracking-[0.02em]',
-  'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--gh-accent-emphasis]/30 focus-visible:ring-offset-2',
+  'inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium tracking-[0.02em]',
+  'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gh-accent-emphasis)]/30 focus-visible:ring-offset-2',
 ].join(' ')
 
 const tagButtonActiveClass = [
-  'border-[--gh-accent-emphasis] bg-[--gh-accent-subtle] text-[--gh-accent-emphasis] shadow-[0_12px_30px_-18px_rgba(31,111,235,0.35)]',
-  'hover:border-[--gh-accent-emphasis] hover:bg-[rgba(31,111,235,0.18)] hover:text-[--gh-accent-emphasis] dark:hover:bg-[rgba(65,132,228,0.26)]',
-  'focus-visible:ring-offset-[--panel-bg] dark:focus-visible:ring-offset-[--panel-bg]',
+  'border-[var(--gh-accent-emphasis)] bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] shadow-[0_12px_30px_-18px_rgba(31,111,235,0.35)]',
+  'hover:border-[var(--gh-accent-emphasis)] hover:bg-[rgba(31,111,235,0.18)] hover:text-[var(--gh-accent-emphasis)] dark:hover:bg-[rgba(65,132,228,0.26)]',
+  'focus-visible:ring-offset-[var(--panel-bg)] dark:focus-visible:ring-offset-[var(--panel-bg)]',
 ].join(' ')
 
 const tagButtonInactiveClass = [
-  'border-[--surface-border]/70 bg-[--panel-bg] text-muted',
-  'hover:bg-[--panel-bg-soft] hover:border-[--surface-border]/40 hover:text-[--gh-accent-emphasis]',
-  'focus-visible:ring-offset-[--panel-bg]',
+  'border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted',
+  'hover:bg-[var(--panel-bg-soft)] hover:border-[var(--surface-border)]/40 hover:text-[var(--gh-accent-emphasis)]',
+  'focus-visible:ring-offset-[var(--panel-bg)]',
 ].join(' ')
 
-const tagBadgeBaseClass = 'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[0.65rem] tracking-[0.08em] transition-colors duration-150'
+const tagBadgeBaseClass = 'inline-flex min-w-[1.45rem] items-center justify-center rounded-full px-2 py-0.5 text-[0.65rem] tracking-[0.04em] transition-colors duration-150'
 
-const tagBadgeActiveClass = 'bg-[rgba(31,111,235,0.18)] text-[--gh-accent-emphasis] dark:bg-[rgba(65,132,228,0.24)] dark:text-[--gh-accent-emphasis]'
+const tagBadgeActiveClass = 'bg-[rgba(31,111,235,0.18)] text-[var(--gh-accent-emphasis)] dark:bg-[rgba(65,132,228,0.24)] dark:text-[var(--gh-accent-emphasis)]'
 
 const tagBadgeInactiveClass = 'bg-slate-400/10 text-muted'
 
@@ -534,6 +538,39 @@ function clearSearch() {
   void focusSearchInput()
 }
 
+function scheduleRecentReadingStatusReset() {
+  if (recentReadingStatusTimer) {
+    clearTimeout(recentReadingStatusTimer)
+  }
+  recentReadingStatusTimer = setTimeout(() => {
+    recentReadingStatusMessage.value = ''
+    pendingRecentReadingRestore.value = []
+  }, 6500)
+}
+
+function clearRecentReading(items?: typeof recentArticles.value) {
+  const clearedItems = items?.length ? items : recentArticles.value
+  pendingRecentReadingRestore.value = clearedItems
+  recentReadingStatusMessage.value = `已清空 ${clearedItems.length} 条最近阅读记录。`
+  scheduleRecentReadingStatusReset()
+  clearReadingHistory()
+}
+
+function restoreRecentReading(items?: typeof recentArticles.value) {
+  const restoreItems = items?.length ? items : pendingRecentReadingRestore.value
+  if (!restoreItems.length) {
+    return
+  }
+
+  restoreReadingHistory(restoreItems)
+  pendingRecentReadingRestore.value = []
+  recentReadingStatusMessage.value = ''
+  if (recentReadingStatusTimer) {
+    clearTimeout(recentReadingStatusTimer)
+    recentReadingStatusTimer = undefined
+  }
+}
+
 function removeFilterChip(key: 'tag' | 'year' | 'search') {
   if (key === 'tag') {
     activeTag.value = null
@@ -639,22 +676,25 @@ onBeforeUnmount(() => {
   if (searchTargetTimer) {
     clearTimeout(searchTargetTimer)
   }
+  if (recentReadingStatusTimer) {
+    clearTimeout(recentReadingStatusTimer)
+  }
 })
 </script>
 
 <template>
   <div class="flex flex-col gap-6 lg:gap-8">
-    <div class="app-card app-card-static rounded-3xl p-4 sm:p-6 lg:p-8">
+    <div class="app-card app-card-static rounded-2xl p-4 sm:p-6 lg:p-8">
       <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.48fr)] lg:items-end">
         <div class="space-y-4">
-          <div class="inline-flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.3em] text-muted">
-            <UBadge variant="soft" color="primary" class="text-[0.65rem] uppercase tracking-[0.25em]">
-              Archive
+          <div class="inline-flex items-center gap-2 text-xs text-muted">
+            <UBadge variant="soft" color="primary" class="rounded-lg text-xs font-medium">
+              归档
             </UBadge>
-            <span class="text-muted/80">{{ totalArticleCount }} posts</span>
+            <span class="text-muted/80">{{ totalArticleCount }} 篇文章</span>
           </div>
           <div class="space-y-3">
-            <h1 class="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-[--gh-fg-default] sm:text-4xl lg:text-5xl">
+            <h1 class="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-[var(--gh-fg-default)] sm:text-4xl lg:text-5xl">
               文章归档
             </h1>
             <p class="max-w-2xl text-sm leading-7 text-muted sm:text-base">
@@ -663,15 +703,15 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <form
-          class="rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] p-3 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.45)] transition-[border-color,box-shadow] duration-200"
-          :class="isSearchTargeted ? 'border-[--gh-accent-emphasis]/70 shadow-[0_0_0_4px_rgba(31,111,235,0.14),0_18px_45px_-32px_rgba(15,23,42,0.45)] dark:shadow-[0_0_0_4px_rgba(65,132,228,0.18),0_18px_45px_-32px_rgba(15,23,42,0.45)]' : ''"
+          class="rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] p-3 shadow-[0_14px_36px_-32px_rgba(15,23,42,0.42)] transition-[border-color,box-shadow] duration-200"
+          :class="isSearchTargeted ? 'border-[var(--gh-accent-emphasis)]/70 shadow-[0_0_0_4px_rgba(31,111,235,0.14),0_18px_45px_-32px_rgba(15,23,42,0.45)] dark:shadow-[0_0_0_4px_rgba(65,132,228,0.18),0_18px_45px_-32px_rgba(15,23,42,0.45)]' : ''"
           role="search"
           @submit.prevent="openFirstResult"
         >
-          <label for="article-search" class="mb-2 block text-[0.65rem] uppercase tracking-[0.28em] text-muted/70">
+          <label for="article-search" class="mb-2 block text-xs font-medium text-muted">
             搜索文章
           </label>
-          <div class="flex min-h-11 items-center gap-2 rounded-xl border border-[--surface-border]/70 bg-[--panel-bg-soft] px-3 py-1.5 transition-colors focus-within:border-[--gh-accent-emphasis]/70">
+          <div class="flex min-h-11 items-center gap-2 rounded-lg border border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-3 py-1.5 transition-colors focus-within:border-[var(--gh-accent-emphasis)]/70">
             <UIcon name="i-lucide-search" class="size-4 shrink-0 text-muted" />
             <input
               id="article-search"
@@ -681,14 +721,14 @@ onBeforeUnmount(() => {
               name="q"
               aria-controls="article-results"
               aria-describedby="archive-search-feedback"
-              class="min-h-11 min-w-0 flex-1 bg-transparent text-sm text-[--gh-fg-default] outline-none placeholder:text-muted/60"
+              class="min-h-11 min-w-0 flex-1 bg-transparent text-sm text-[var(--gh-fg-default)] outline-none placeholder:text-muted/60"
               placeholder="标题、简介、标签"
               autocomplete="off"
               @keydown.enter.prevent="openFirstResult"
             >
             <button
               type="submit"
-              class="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[--surface-border]/70 bg-[--panel-bg] text-muted transition-colors hover:border-[--gh-accent-emphasis]/70 hover:bg-[--gh-accent-subtle] hover:text-[--gh-accent-emphasis] focus-visible:bg-[--gh-accent-subtle] focus-visible:text-[--gh-accent-emphasis] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
+              class="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)] focus-visible:bg-[var(--gh-accent-subtle)] focus-visible:text-[var(--gh-accent-emphasis)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
               :disabled="!firstVisibleArticle"
               :aria-label="firstVisibleArticle ? `打开第一篇匹配文章：${firstVisibleArticle.title}` : '没有可打开的匹配文章'"
               aria-controls="article-results"
@@ -698,7 +738,7 @@ onBeforeUnmount(() => {
             <button
               v-if="searchQuery"
               type="button"
-              class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-[--panel-bg] hover:text-[--gh-accent-emphasis] focus-visible:bg-[--panel-bg] focus-visible:text-[--gh-accent-emphasis] focus-visible:outline-none"
+              class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)] focus-visible:bg-[var(--panel-bg)] focus-visible:text-[var(--gh-accent-emphasis)] focus-visible:outline-none"
               aria-label="清空搜索"
               aria-controls="article-results"
               @click="clearSearch"
@@ -719,24 +759,26 @@ onBeforeUnmount(() => {
         <RecentReadingPanel
           v-if="!hasActiveFilters"
           class="mt-8"
-          :items="recentArticles"
-          @clear="clearReadingHistory"
-          @restore="restoreReadingHistory"
+          :items="recentReadingPanelItems"
+          :status-message="recentReadingStatusMessage"
+          :restore-items="pendingRecentReadingRestore"
+          @clear="clearRecentReading"
+          @restore="restoreRecentReading"
         />
       </ClientOnly>
 
       <div class="mt-8 space-y-6">
         <div
           id="archive-controls"
-          class="scroll-mt-28 space-y-2 rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] px-3 py-3 sm:px-4 sm:py-4"
+          class="scroll-mt-28 space-y-3 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-3 py-3 sm:px-4 sm:py-4"
         >
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <span class="text-[0.65rem] uppercase tracking-[0.3em] text-muted/70">按标签浏览</span>
+            <span class="text-xs font-medium text-muted">按标签浏览</span>
             <div class="flex flex-wrap items-center gap-2">
               <button
                 v-if="hasActiveFilters"
                 type="button"
-                class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[--surface-border]/70 bg-[--panel-bg-soft] px-4 py-2 text-[0.6rem] font-medium uppercase tracking-[0.2em] text-muted transition-colors duration-200 hover:border-[--gh-accent-emphasis]/70 hover:text-[--gh-accent-emphasis]"
+                class="inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors duration-200 hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
                 :aria-label="copyFilterLabel"
                 @click="copyCurrentArchiveView"
               >
@@ -753,7 +795,7 @@ onBeforeUnmount(() => {
               <button
                 v-if="hiddenTagCount > 0"
                 type="button"
-                class="inline-flex min-h-11 items-center gap-1 rounded-full border border-transparent bg-transparent px-4 py-2 text-[0.6rem] font-medium uppercase tracking-[0.25em] text-muted transition-colors duration-200 hover:text-[--gh-accent-emphasis]"
+                class="inline-flex min-h-10 items-center gap-1 rounded-full border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-muted transition-colors duration-200 hover:text-[var(--gh-accent-emphasis)]"
                 :aria-expanded="showAllTags"
                 aria-controls="tag-filter-list"
                 @click="toggleTagVisibility"
@@ -765,19 +807,19 @@ onBeforeUnmount(() => {
 
           <div
             v-if="activeFilterChips.length"
-            class="flex flex-wrap items-center gap-2 rounded-xl border border-[--surface-border]/60 bg-[--panel-bg-soft] px-3 py-2"
+            class="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-2"
             aria-label="当前筛选条件"
           >
-            <span class="text-[0.65rem] uppercase tracking-[0.25em] text-muted/70">当前筛选</span>
+            <span class="text-xs font-medium text-muted">当前筛选</span>
             <button
               v-for="chip in activeFilterChips"
               :key="chip.key"
               type="button"
-              class="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full border border-[--gh-accent-emphasis]/30 bg-[--gh-accent-subtle] px-3 py-2 text-xs font-medium text-[--gh-accent-emphasis] transition-colors hover:border-[--gh-accent-emphasis] hover:bg-[rgba(31,111,235,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--gh-accent-emphasis]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[--panel-bg-soft] dark:hover:bg-[rgba(65,132,228,0.26)]"
+              class="inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[rgba(31,111,235,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gh-accent-emphasis)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--panel-bg-soft)] dark:hover:bg-[rgba(65,132,228,0.26)]"
               :aria-label="chip.removeLabel"
               @click="removeFilterChip(chip.key)"
             >
-              <span class="shrink-0 text-[0.6rem] uppercase tracking-[0.18em] text-[--gh-accent-emphasis]/80">
+              <span class="shrink-0 text-xs text-[var(--gh-accent-emphasis)]/80">
                 {{ chip.label }}
               </span>
               <span class="min-w-0 truncate">{{ chip.value }}</span>
@@ -836,9 +878,9 @@ onBeforeUnmount(() => {
 
           <div
             v-if="allYears.length"
-            class="border-t border-[--surface-border]/60 pt-3"
+            class="border-t border-[var(--surface-border)]/60 pt-3"
           >
-            <div class="mb-2 text-[0.65rem] uppercase tracking-[0.3em] text-muted/70">
+            <div class="mb-2 text-xs font-medium text-muted">
               按年份浏览
             </div>
             <div class="filter-scroll-shell filter-scroll-shell--scrollable">
@@ -908,7 +950,7 @@ onBeforeUnmount(() => {
             id="archive-results-summary"
             ref="resultsSummaryRef"
             tabindex="-1"
-            class="flex flex-col gap-1 rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg-soft] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-1 rounded-2xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             aria-live="polite"
           >
             <p class="text-sm font-medium text-muted-strong">
@@ -945,13 +987,13 @@ onBeforeUnmount(() => {
             </div>
           </TransitionGroup>
 
-          <div v-if="hasMoreArticles" class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[--surface-border]/70 bg-[--panel-bg-soft] px-4 py-5 text-center">
+          <div v-if="hasMoreArticles" class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-4 py-5 text-center">
             <p class="text-sm text-muted">
               已显示 {{ visibleArticles.length }} 篇，还有 {{ hiddenArticleCount }} 篇可继续浏览。
             </p>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[--surface-border]/80 bg-[--panel-bg] px-4 py-2 text-sm font-medium text-[--gh-accent-emphasis] transition-colors hover:border-[--gh-accent-emphasis]/70 hover:bg-[--gh-accent-subtle]"
+              class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
               @click="loadMoreArticles"
             >
               加载更多
@@ -966,7 +1008,7 @@ onBeforeUnmount(() => {
             aria-live="polite"
           >
             <div class="mx-auto flex max-w-md flex-col items-center gap-3">
-              <UIcon name="i-lucide-search-x" class="size-8 text-[--gh-accent-emphasis]" />
+              <UIcon name="i-lucide-search-x" class="size-8 text-[var(--gh-accent-emphasis)]" />
               <p class="font-medium text-muted-strong">
                 没有找到匹配的文章
               </p>
@@ -976,7 +1018,7 @@ onBeforeUnmount(() => {
               <button
                 v-if="hasActiveFilters"
                 type="button"
-                class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[--surface-border]/80 bg-[--panel-bg] px-4 py-2 text-sm font-medium text-[--gh-accent-emphasis] transition-colors hover:border-[--gh-accent-emphasis]/70 hover:bg-[--gh-accent-subtle]"
+                class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
                 aria-label="清空当前搜索和筛选条件"
                 @click="clearFilters"
               >

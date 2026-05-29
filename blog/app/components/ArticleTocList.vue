@@ -27,18 +27,18 @@ const emit = defineEmits<{
 }>()
 
 const listClass = computed(() => props.level > 0
-  ? props.tocUi?.listWithChildren || 'mt-2 space-y-1 border-l border-[--surface-border]/60 pl-3'
+  ? props.tocUi?.listWithChildren || 'mt-2 space-y-1 border-l border-[var(--surface-border)]/60 pl-3'
   : props.tocUi?.list || 'space-y-1 text-sm text-muted leading-relaxed')
 
 const itemClass = computed(() => props.level > 0
   ? props.tocUi?.itemWithChildren || 'pl-2'
   : props.tocUi?.item || 'max-w-full overflow-hidden')
 
-const linkClass = computed(() => props.tocUi?.link || 'flex min-h-11 max-w-full items-center truncate rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[--panel-bg-soft] hover:text-[--gh-accent-emphasis] lg:min-h-0 lg:py-1.5')
+const linkClass = computed(() => props.tocUi?.link || 'flex min-h-11 max-w-full items-center truncate rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--panel-bg-soft)] hover:text-[var(--gh-accent-emphasis)] lg:min-h-0 lg:py-1.5')
 
 const linkTextClass = computed(() => props.tocUi?.linkText || 'break-words text-left')
 
-const activeLinkClass = computed(() => props.tocUi?.activeLink || 'bg-[--gh-accent-subtle] text-[--gh-accent-emphasis]')
+const activeLinkClass = computed(() => props.tocUi?.activeLink || 'bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)]')
 
 function handleLinkClick(id: string) {
   emit('move', id)

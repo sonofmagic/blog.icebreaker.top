@@ -15,20 +15,24 @@ const props = withDefaults(defineProps<{
   items: RecentReadingItem[]
   title?: string
   compact?: boolean
+  statusMessage?: string
+  restoreItems?: RecentReadingItem[]
 }>(), {
   title: '最近阅读',
   compact: false,
+  statusMessage: '',
+  restoreItems: () => [],
 })
 
 const emit = defineEmits<{
-  clear: []
-  restore: [items: RecentReadingItem[]]
+  clear: [items: RecentReadingItem[]]
+  restore: [items?: RecentReadingItem[]]
 }>()
 
-const pendingRestoreItems = ref<RecentReadingItem[]>([])
-const statusMessage = ref('')
+const localPendingRestoreItems = ref<RecentReadingItem[]>([])
+const localStatusMessage = ref('')
 const undoButtonRef = ref<HTMLButtonElement | null>(null)
-let statusResetTimer: ReturnType<typeof setTimeout> | undefined
+let localStatusResetTimer: ReturnType<typeof setTimeout> | undefined
 const panelTitleId = useId()
 
 function clampProgress(progress?: number) {
@@ -61,6 +65,11 @@ function formatReadAt(readAt?: number) {
   return null
 }
 
+const canUndoClear = computed(() => props.restoreItems.length > 0 || localPendingRestoreItems.value.length > 0)
+const displayStatusMessage = computed(() => props.statusMessage || localStatusMessage.value)
+const hasUndoState = computed(() => Boolean(displayStatusMessage.value && canUndoClear.value))
+const shouldRenderPanel = computed(() => props.items.length > 0 || hasUndoState.value)
+
 const displayItems = computed(() => props.items.map((item) => {
   const progress = clampProgress(item.progress)
   const hasResumableProgress = Boolean(progress && progress > 5 && progress < 95)
@@ -81,24 +90,25 @@ const clearLabel = computed(() => {
   return count > 0 ? `清空 ${count} 条最近阅读记录` : '清空最近阅读记录'
 })
 
-function scheduleStatusReset() {
-  if (statusResetTimer) {
-    clearTimeout(statusResetTimer)
+function scheduleLocalStatusReset() {
+  if (localStatusResetTimer) {
+    clearTimeout(localStatusResetTimer)
   }
-  statusResetTimer = setTimeout(() => {
-    statusMessage.value = ''
-    pendingRestoreItems.value = []
+  localStatusResetTimer = setTimeout(() => {
+    localStatusMessage.value = ''
+    localPendingRestoreItems.value = []
   }, 6500)
 }
 
 function handleClear() {
-  pendingRestoreItems.value = props.items.map(item => ({
+  const items = props.items.map(item => ({
     ...item,
     tags: [...item.tags],
   }))
-  statusMessage.value = `已清空 ${pendingRestoreItems.value.length} 条最近阅读记录。`
-  emit('clear')
-  scheduleStatusReset()
+  localPendingRestoreItems.value = items
+  localStatusMessage.value = `已清空 ${items.length} 条最近阅读记录。`
+  scheduleLocalStatusReset()
+  emit('clear', items)
 
   if (!import.meta.client) {
     return
@@ -110,14 +120,16 @@ function handleClear() {
 }
 
 async function handleUndoClear() {
-  if (pendingRestoreItems.value.length === 0) {
+  if (!canUndoClear.value) {
     return
   }
 
-  emit('restore', pendingRestoreItems.value)
-  statusMessage.value = '最近阅读记录已恢复。'
-  pendingRestoreItems.value = []
-  scheduleStatusReset()
+  const localItems = props.restoreItems.length > 0 ? props.restoreItems : localPendingRestoreItems.value
+  emit('restore', localItems)
+
+  localPendingRestoreItems.value = []
+  localStatusMessage.value = '最近阅读记录已恢复。'
+  scheduleLocalStatusReset()
 
   await nextTick()
   if (!import.meta.client) {
@@ -129,22 +141,22 @@ async function handleUndoClear() {
 }
 
 onBeforeUnmount(() => {
-  if (statusResetTimer) {
-    clearTimeout(statusResetTimer)
+  if (localStatusResetTimer) {
+    clearTimeout(localStatusResetTimer)
   }
 })
 </script>
 
 <template>
   <section
-    v-if="items.length || statusMessage"
+    v-if="shouldRenderPanel"
     class="recent-reading"
     :class="{ 'recent-reading--compact': compact }"
     :aria-labelledby="panelTitleId"
   >
     <div v-if="items.length" class="recent-reading__header">
       <h2 :id="panelTitleId" class="recent-reading__label">
-        <UIcon name="i-lucide-history" class="size-4 text-[--gh-accent-emphasis]" />
+        <UIcon name="i-lucide-history" class="size-4 text-[var(--gh-accent-emphasis)]" />
         {{ title }}
       </h2>
       <button
@@ -162,14 +174,14 @@ onBeforeUnmount(() => {
     </h2>
 
     <div
-      v-if="statusMessage"
+      v-if="displayStatusMessage"
       class="recent-reading__status"
       role="status"
       aria-live="polite"
     >
-      <span>{{ statusMessage }}</span>
+      <span>{{ displayStatusMessage }}</span>
       <button
-        v-if="pendingRestoreItems.length"
+        v-if="canUndoClear"
         ref="undoButtonRef"
         type="button"
         class="recent-reading__undo"
@@ -180,11 +192,17 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <div v-if="items.length" class="recent-reading__grid" role="list">
+    <div
+      v-if="items.length"
+      class="recent-reading__grid"
+      :class="{ 'recent-reading__grid--single': displayItems.length === 1 }"
+      role="list"
+    >
       <div
-        v-for="item in displayItems"
+        v-for="(item, index) in displayItems"
         :key="item.path"
         class="recent-reading__item"
+        :class="{ 'recent-reading__item--primary': index === 0 }"
         role="listitem"
       >
         <ULink
@@ -245,13 +263,13 @@ onBeforeUnmount(() => {
 <style scoped>
 .recent-reading {
   border: 1px solid var(--surface-border);
-  border-radius: 1rem;
+  border-radius: 0.95rem;
   background: var(--panel-bg);
-  padding: 1rem 0.75rem;
+  padding: 1rem;
 }
 
 .recent-reading--compact {
-  padding: 1rem;
+  padding: 0.95rem;
 }
 
 .recent-reading__header {
@@ -268,11 +286,10 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: color-mix(in srgb, var(--muted) 86%, transparent);
-  font-size: 0.65rem;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
   font-weight: 650;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .recent-reading__clear {
@@ -287,10 +304,9 @@ onBeforeUnmount(() => {
   background: transparent;
   padding: 0.5rem 1rem;
   color: var(--muted);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   transition:
     color 0.18s ease,
     border-color 0.18s ease,
@@ -311,7 +327,7 @@ onBeforeUnmount(() => {
 
 .recent-reading__grid {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .recent-reading__status {
@@ -361,12 +377,16 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 1024px) {
-  .recent-reading__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .recent-reading:not(.recent-reading--compact) .recent-reading__grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   }
 
-  .recent-reading--compact .recent-reading__grid {
-    grid-template-columns: 1fr;
+  .recent-reading:not(.recent-reading--compact) .recent-reading__grid--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recent-reading:not(.recent-reading--compact) .recent-reading__item--primary {
+    grid-row: span 2;
   }
 }
 
@@ -377,13 +397,14 @@ onBeforeUnmount(() => {
 .recent-reading__card {
   display: flex;
   min-width: 0;
-  min-height: 6rem;
+  min-height: 5.6rem;
   flex-direction: column;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--surface-border) 78%, transparent);
-  border-radius: 1rem;
-  background: var(--panel-bg-soft);
+  border: 1px solid transparent;
+  border-top-color: color-mix(in srgb, var(--surface-border) 86%, transparent);
+  border-radius: 0.75rem;
+  background: transparent;
   padding: 0.75rem 1rem;
   transition:
     background-color 0.18s ease,
@@ -393,8 +414,8 @@ onBeforeUnmount(() => {
 
 .recent-reading__card:hover,
 .recent-reading__card:focus-visible {
-  border-color: color-mix(in srgb, var(--gh-accent-emphasis) 60%, transparent);
-  background: var(--gh-accent-subtle);
+  border-color: color-mix(in srgb, var(--gh-accent-emphasis) 38%, var(--surface-border));
+  background: color-mix(in srgb, var(--gh-accent-subtle) 42%, transparent);
 }
 
 .recent-reading__card:focus-visible {
@@ -410,6 +431,7 @@ onBeforeUnmount(() => {
   gap: 0.75rem;
   color: var(--muted);
   font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .recent-reading__meta-extra {
@@ -417,14 +439,13 @@ onBeforeUnmount(() => {
   min-width: 0;
   flex-shrink: 0;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
   white-space: nowrap;
 }
 
-.recent-reading__meta-extra span + span::before {
-  content: '·';
-  margin-right: 0.45rem;
-  color: color-mix(in srgb, var(--muted) 65%, transparent);
+.recent-reading__meta-extra span + span {
+  padding-left: 0.55rem;
+  border-left: 1px solid color-mix(in srgb, var(--surface-border) 78%, transparent);
 }
 
 .recent-reading__title {
@@ -437,6 +458,16 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.recent-reading__item--primary .recent-reading__card {
+  border-color: color-mix(in srgb, var(--surface-border) 86%, transparent);
+  background: color-mix(in srgb, var(--panel-bg-soft) 70%, transparent);
+}
+
+.recent-reading__item--primary .recent-reading__title {
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .recent-reading__card:hover .recent-reading__title,
@@ -484,10 +515,10 @@ onBeforeUnmount(() => {
 
 .recent-reading__progress-track {
   display: block;
-  height: 0.25rem;
+  height: 0.18rem;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-border) 60%, transparent);
+  background: color-mix(in srgb, var(--surface-border) 55%, transparent);
 }
 
 .recent-reading__progress-bar {
@@ -495,5 +526,43 @@ onBeforeUnmount(() => {
   height: 100%;
   border-radius: inherit;
   background: var(--gh-accent-emphasis);
+}
+
+@media (max-width: 640px) {
+  .recent-reading {
+    padding: 0.85rem;
+  }
+
+  .recent-reading__header {
+    margin-bottom: 0.55rem;
+  }
+
+  .recent-reading__grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .recent-reading__grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .recent-reading__item {
+    flex: 0 0 min(17rem, 82vw);
+    scroll-snap-align: start;
+  }
+
+  .recent-reading__card {
+    height: 100%;
+    padding: 0.85rem;
+  }
+
+  .recent-reading__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
 }
 </style>

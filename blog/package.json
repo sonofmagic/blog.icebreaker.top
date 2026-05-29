@@ -11,9 +11,11 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
+    "lint": "eslint .",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "sync": "node ./scripts/syncArticles.js"
+    "sync": "node ./scripts/syncArticles.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@iconify/tailwind": "^1.2.0",

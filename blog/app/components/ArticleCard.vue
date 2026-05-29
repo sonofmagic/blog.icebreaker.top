@@ -20,7 +20,7 @@ const router = useRouter()
 
 const rankLabel = computed(() => props.article.rank.toString().padStart(2, '0'))
 const formattedDate = computed(() => props.article.date ?? '尚未记录')
-const readingMeta = computed(() => {
+const readingMetaItems = computed(() => {
   const meta: string[] = []
   if (props.article.readingMinutes) {
     meta.push(`${props.article.readingMinutes} 分钟阅读`)
@@ -28,7 +28,7 @@ const readingMeta = computed(() => {
   if (props.article.readingWords) {
     meta.push(`${props.article.readingWords} 字`)
   }
-  return meta.join(' · ')
+  return meta
 })
 const topTags = computed(() => props.article.tags.slice(0, 3))
 
@@ -52,7 +52,9 @@ function openArticleFromCard(event: MouseEvent) {
         <span class="card__rank">{{ rankLabel }}</span>
         <span class="card__date">{{ formattedDate }}</span>
       </div>
-      <span v-if="readingMeta" class="card__meta">{{ readingMeta }}</span>
+      <span v-if="readingMetaItems.length" class="card__meta">
+        <span v-for="meta in readingMetaItems" :key="meta">{{ meta }}</span>
+      </span>
     </header>
 
     <div class="card__body">
@@ -89,11 +91,9 @@ function openArticleFromCard(event: MouseEvent) {
     </div>
 
     <footer class="card__footer">
-      <div class="card__footer-copy">
-        <span class="card__footer-label">继续阅读</span>
-      </div>
+      <span class="card__footer-label">打开文章</span>
       <span class="card__cta" aria-hidden="true">
-        阅读全文
+        阅读
         <UIcon name="i-lucide-arrow-right" class="size-4" />
       </span>
     </footer>
@@ -106,21 +106,18 @@ function openArticleFromCard(event: MouseEvent) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  border-radius: 24px;
+  gap: 1.25rem;
+  border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--surface-border) 90%, transparent 10%);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--panel-bg) 94%, transparent 6%),
-    color-mix(in srgb, var(--panel-bg) 92%, transparent 8%)
-  );
-  padding: 1.75rem;
-  box-shadow: 0 24px 60px -42px rgba(15, 23, 42, 0.55);
+  background: color-mix(in srgb, var(--panel-bg) 96%, transparent 4%);
+  padding: 1.45rem;
+  box-shadow: 0 18px 46px -38px rgba(15, 23, 42, 0.42);
   cursor: pointer;
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease;
 }
 
 .card::before {
@@ -128,24 +125,20 @@ function openArticleFromCard(event: MouseEvent) {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(
-    circle at 20% 20%,
-    color-mix(in srgb, var(--gh-accent-emphasis) 18%, transparent) 0%,
-    transparent 60%
-  );
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gh-accent-subtle) 48%, transparent), transparent 68%);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 32px 80px -38px rgba(15, 23, 42, 0.6);
-  border-color: color-mix(in srgb, var(--surface-border) 70%, transparent 30%);
+  transform: translateY(-2px);
+  box-shadow: 0 22px 54px -40px rgba(15, 23, 42, 0.5);
+  border-color: color-mix(in srgb, var(--gh-accent-emphasis) 28%, var(--surface-border));
 }
 
 .card:hover::before {
-  opacity: 0.9;
+  opacity: 0.5;
 }
 
 .card__header {
@@ -156,8 +149,8 @@ function openArticleFromCard(event: MouseEvent) {
   align-items: flex-start;
   gap: 1rem;
   font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.28em;
+  text-transform: none;
+  letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--gh-fg-default) 65%, transparent 35%);
 }
 
@@ -173,11 +166,11 @@ function openArticleFromCard(event: MouseEvent) {
   justify-content: center;
   min-width: 2.2rem;
   padding: 0.35rem 0.65rem;
-  border-radius: 999px;
+  border-radius: 0.65rem;
   background: color-mix(in srgb, var(--gh-accent-subtle) 75%, transparent 25%);
   color: var(--gh-accent-emphasis);
   font-weight: 600;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.04em;
 }
 
 .card__date {
@@ -185,6 +178,10 @@ function openArticleFromCard(event: MouseEvent) {
 }
 
 .card__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem 0.6rem;
   white-space: nowrap;
   color: color-mix(in srgb, var(--gh-fg-default) 55%, transparent 45%);
 }
@@ -204,7 +201,7 @@ function openArticleFromCard(event: MouseEvent) {
   min-height: 2.75rem;
   align-items: center;
   border-radius: 0.75rem;
-  font-size: 1.25rem;
+  font-size: 1.18rem;
   font-weight: 650;
   line-height: 1.35;
   color: var(--gh-fg-default);
@@ -300,9 +297,7 @@ button.card__tag:focus-visible {
 }
 
 .card__footer-label {
-  font-size: 0.6rem;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
   color: color-mix(in srgb, var(--gh-fg-default) 55%, transparent 45%);
 }
 
@@ -311,7 +306,7 @@ button.card__tag:focus-visible {
   min-height: 2.75rem;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.55rem 1.1rem;
+  padding: 0.5rem 0.95rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--surface-border) 80%, transparent 20%);
   color: var(--gh-accent-emphasis);
@@ -330,14 +325,19 @@ button.card__tag:focus-visible {
 
 @media (max-width: 640px) {
   .card {
-    padding: 1.5rem;
-    border-radius: 20px;
+    padding: 1.2rem;
+    border-radius: 16px;
   }
 
   .card__header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.6rem;
+  }
+
+  .card__meta {
+    justify-content: flex-start;
+    white-space: normal;
   }
 }
 
@@ -349,7 +349,7 @@ button.card__tag:focus-visible {
 
 @media (min-width: 768px) {
   .card__title {
-    font-size: 1.375rem;
+    font-size: 1.28rem;
   }
 
   .card__excerpt {

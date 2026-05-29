@@ -23,7 +23,7 @@ const refinedSrc = computed(() => {
   return props.src
 })
 
-const baseClass = computed(() => props.ui?.base || 'max-w-full rounded-2xl border border-[--surface-border]/60 bg-[--panel-bg] shadow-[0_18px_45px_-32px_rgba(15,23,42,0.45)]')
+const baseClass = computed(() => props.ui?.base || 'max-w-full rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] shadow-[0_14px_38px_-32px_rgba(15,23,42,0.38)]')
 const isPreviewOpen = ref(false)
 const dialogRef = ref<HTMLElement | null>(null)
 const previewStageRef = ref<HTMLElement | null>(null)
@@ -67,6 +67,13 @@ function updatePreviewStageScrollability() {
   }
 
   isPreviewStageScrollable.value = element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1
+}
+
+function requestPreviewStageScrollabilityUpdate() {
+  if (!import.meta.client) {
+    return
+  }
+  window.requestAnimationFrame(updatePreviewStageScrollability)
 }
 
 function getPreviewFocusableElements() {
@@ -140,10 +147,10 @@ watch(isPreviewOpen, async (isOpen) => {
     await nextTick()
     focusPreviewDialog()
     updatePreviewStageScrollability()
-    window.addEventListener('resize', updatePreviewStageScrollability, { passive: true })
+    window.addEventListener('resize', requestPreviewStageScrollabilityUpdate, { passive: true })
 
     if ('ResizeObserver' in window && previewStageRef.value) {
-      previewResizeObserver = new ResizeObserver(updatePreviewStageScrollability)
+      previewResizeObserver = new ResizeObserver(requestPreviewStageScrollabilityUpdate)
       previewResizeObserver.observe(previewStageRef.value)
     }
     return
@@ -151,7 +158,7 @@ watch(isPreviewOpen, async (isOpen) => {
 
   document.body.style.overflow = previousBodyOverflow
   window.removeEventListener('keydown', handleKeydown)
-  window.removeEventListener('resize', updatePreviewStageScrollability)
+  window.removeEventListener('resize', requestPreviewStageScrollabilityUpdate)
   previewResizeObserver?.disconnect()
   previewResizeObserver = undefined
   isPreviewStageScrollable.value = false
@@ -166,7 +173,7 @@ onBeforeUnmount(() => {
   }
   document.body.style.overflow = previousBodyOverflow
   window.removeEventListener('keydown', handleKeydown)
-  window.removeEventListener('resize', updatePreviewStageScrollability)
+  window.removeEventListener('resize', requestPreviewStageScrollabilityUpdate)
   previewResizeObserver?.disconnect()
 })
 </script>
@@ -253,7 +260,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   background: transparent;
   padding: 0;
   color: inherit;
@@ -270,7 +277,7 @@ onBeforeUnmount(() => {
   display: block;
   margin-top: 0.65rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   line-height: 1.6;
   text-align: center;
 }
@@ -282,20 +289,20 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(1, 4, 9, 0.82);
+  background: rgba(1, 4, 9, 0.78);
   padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right))
     max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(14px);
 }
 
 .prose-image-preview__stage {
   max-height: min(86vh, 56rem);
   max-width: min(94vw, 72rem);
   overflow: auto;
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(13, 17, 23, 0.96);
-  box-shadow: 0 36px 90px -34px rgba(0, 0, 0, 0.78);
+  box-shadow: 0 30px 80px -36px rgba(0, 0, 0, 0.78);
 }
 
 .prose-image-preview__stage:focus-visible {
@@ -317,7 +324,7 @@ onBeforeUnmount(() => {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   padding: 0.9rem 1rem;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   line-height: 1.65;
   text-align: center;
 }
@@ -332,7 +339,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
+  border-radius: 0.9rem;
   background: rgba(13, 17, 23, 0.78);
   color: rgba(255, 255, 255, 0.86);
   transition:
@@ -345,7 +352,7 @@ onBeforeUnmount(() => {
 .prose-image-preview__close:focus-visible {
   border-color: rgba(255, 255, 255, 0.38);
   background: rgba(13, 17, 23, 0.95);
-  color: #ffffff;
+  color: rgba(252, 253, 255, 0.96);
 }
 
 .prose-image-preview__close:focus-visible {
