@@ -43,19 +43,6 @@ jobs:
         run: pnpm generate
       - name: Validate deployment bundle
         run: pnpm exec wrangler deploy --dry-run
-      # - name: Deploy to Netlify
-      #   uses: nwtgck/actions-netlify@v3.0
-      #   with:
-      #     publish-dir: blog/.output/public
-      #     production-branch: master
-      #     # github-token: ${{ secrets.PERSONAL_TOKEN }}
-      #     deploy-message: Deploy from GitHub Actions
-      #     enable-pull-request-comment: false
-      #     enable-commit-comment: true
-      #     overwrites-pull-request-comment: true
-      #   env:
-      #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       - name: Deploy to Cloudflare Workers
         if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
         id: deploy
