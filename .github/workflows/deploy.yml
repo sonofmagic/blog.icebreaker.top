@@ -2,6 +2,11 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and validate without publishing
+        type: boolean
+        default: true
   # add webhook
   repository_dispatch:
     types:
@@ -36,6 +41,8 @@ jobs:
       - name: Build Site
         working-directory: blog
         run: pnpm generate
+      - name: Validate deployment bundle
+        run: pnpm exec wrangler deploy --dry-run
       # - name: Deploy to Netlify
       #   uses: nwtgck/actions-netlify@v3.0
       #   with:
@@ -50,6 +57,7 @@ jobs:
       #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
       - name: Deploy to Cloudflare Workers
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
         id: deploy
         uses: cloudflare/wrangler-action@v4.1.3
 
@@ -57,8 +65,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: 4.145.0
-          command: deploy --name=icebreaker-blog --assets=blog/.output/public
+          command: deploy
       - name: print deployment-url
+        if: steps.deploy.outcome == 'success'
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
         run: echo $DEPLOYMENT_URL

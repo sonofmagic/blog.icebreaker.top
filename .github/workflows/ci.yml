@@ -1,14 +1,17 @@
 name: CI
 
 on:
-  # push:
-  #   branches: ['main']
+  push:
   pull_request:
     types: [opened, synchronize]
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -49,6 +52,10 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Validate deployment bundle
+        if: runner.os == 'Linux'
+        run: pnpm exec wrangler deploy --dry-run
 
       - name: Test
         run: pnpm test
