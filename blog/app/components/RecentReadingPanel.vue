@@ -1,14 +1,9 @@
 <script setup lang="ts">
+import type { ReadingHistoryItem } from '@/composables/useReadingHistory'
 import { computed, nextTick, onBeforeUnmount, ref, useId } from 'vue'
 
-interface RecentReadingItem {
-  path: string
-  title: string
-  date?: string
-  tags: string[]
+interface RecentReadingItem extends ReadingHistoryItem {
   readingMinutes?: number
-  progress?: number
-  readAt?: number
 }
 
 const props = withDefaults(defineProps<{

@@ -63,11 +63,10 @@ export function useSiteSeo(meta: MaybeRefOrGetter<SiteSeoInput> = {}) {
         ogUrl: canonicalUrl,
         ogSiteName: siteName,
         ogImage,
-        twitterCard: 'summary_large_image',
+        twitterCard: 'summary_large_image' as const,
         twitterTitle: title,
         twitterDescription: description,
         twitterImage: ogImage,
-        canonical: canonicalUrl,
         robots,
         articlePublishedTime: input.publishedTime,
         articleModifiedTime: input.modifiedTime,
@@ -76,7 +75,24 @@ export function useSiteSeo(meta: MaybeRefOrGetter<SiteSeoInput> = {}) {
     }
   })
 
-  useSeoMeta(() => resolved.value.meta)
+  useSeoMeta({
+    title: () => resolved.value.meta.title,
+    description: () => resolved.value.meta.description,
+    ogType: () => resolved.value.meta.ogType,
+    ogTitle: () => resolved.value.meta.ogTitle,
+    ogDescription: () => resolved.value.meta.ogDescription,
+    ogUrl: () => resolved.value.meta.ogUrl,
+    ogSiteName: () => resolved.value.meta.ogSiteName,
+    ogImage: () => resolved.value.meta.ogImage,
+    twitterCard: () => resolved.value.meta.twitterCard,
+    twitterTitle: () => resolved.value.meta.twitterTitle,
+    twitterDescription: () => resolved.value.meta.twitterDescription,
+    twitterImage: () => resolved.value.meta.twitterImage,
+    robots: () => resolved.value.meta.robots,
+    articlePublishedTime: () => resolved.value.meta.articlePublishedTime,
+    articleModifiedTime: () => resolved.value.meta.articleModifiedTime,
+    articleTag: () => resolved.value.meta.articleTag,
+  })
   useHead(() => ({
     title: resolved.value.fullTitle,
     titleTemplate: '%s',

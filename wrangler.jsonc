@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "icebreaker-blog",
+  "compatibility_date": "2026-09-30",
+  "assets": {
+    "directory": "./blog/.output/public",
+    "not_found_handling": "404-page"
+  }
+}

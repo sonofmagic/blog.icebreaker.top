@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { MarkdownRoot } from '@nuxt/content'
+import type { TocLink } from '@/utils/contentBody'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ArticleTocList from '@/components/ArticleTocList.vue'
 import RecentReadingPanel from '@/components/RecentReadingPanel.vue'
+import { buildTocLinksFromBody, extractFirstParagraphText } from '@/utils/contentBody'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,117 +46,6 @@ function parseMeta(entry: Record<string, any>) {
     return entry.meta as Record<string, any>
   }
   return {}
-}
-
-interface TocLink {
-  id: string
-  depth: number
-  text: string
-  children?: TocLink[]
-}
-
-function gatherNodeText(node: any): string {
-  if (!node || typeof node !== 'object') {
-    return ''
-  }
-  if (typeof node.value === 'string') {
-    return node.value
-  }
-  if (Array.isArray(node.children)) {
-    return node.children.map(
-      child => gatherNodeText(child),
-    ).join('')
-  }
-  return ''
-}
-
-function extractFirstParagraphText(body: any): string | undefined {
-  if (!body || typeof body !== 'object') {
-    return undefined
-  }
-  const nodes = Array.isArray(body.children) ? body.children : []
-  for (const node of nodes) {
-    if (!node || typeof node !== 'object') {
-      continue
-    }
-    const isParagraph = node.tag === 'p' || (node.type === 'element' && node.tag === 'p')
-    if (isParagraph) {
-      const text = gatherNodeText(node).trim()
-      if (text) {
-        return text.replace(/\s+/g, ' ')
-      }
-    }
-  }
-  return undefined
-}
-
-function buildTocLinksFromBody(body: MarkdownRoot | undefined | null): TocLink[] {
-  const children = Array.isArray(body?.children) ? body!.children : []
-  const links: TocLink[] = []
-  const stack: Array<{ depth: number, link: TocLink }> = []
-
-  for (const node of children) {
-    if (!node || typeof node !== 'object') {
-      continue
-    }
-    const tag = typeof (node as any).tag === 'string' ? (node as any).tag : null
-    if (!tag || !tag.startsWith('h')) {
-      continue
-    }
-
-    const depth = Number.parseInt(tag.slice(1), 10)
-    if (!Number.isFinite(depth) || depth < 2) {
-      continue
-    }
-
-    const id = typeof (node as any).props?.id === 'string' ? (node as any).props.id : null
-    if (!id) {
-      continue
-    }
-
-    const text = gatherNodeText(node).trim()
-    if (!text) {
-      continue
-    }
-
-    const link: TocLink = {
-      id,
-      depth,
-      text,
-      children: [],
-    }
-
-    while (stack.length > 0 && stack[stack.length - 1]!.depth >= depth) {
-      stack.pop()
-    }
-
-    if (stack.length === 0) {
-      links.push(link)
-    }
-    else {
-      const parent = stack[stack.length - 1]!.link
-      if (!parent.children) {
-        parent.children = []
-      }
-      parent.children.push(link)
-    }
-
-    stack.push({ depth, link })
-  }
-
-  function normalize(nodes: TocLink[]): TocLink[] {
-    return nodes.map((node) => {
-      if (node.children && node.children.length === 0) {
-        delete node.children
-      }
-      else if (node.children) {
-        node.children = normalize(node.children)
-      }
-      return node
-    })
-  }
-
-  return normalize(links)
 }
 
 function normalizeShikiStyleText(value: string) {

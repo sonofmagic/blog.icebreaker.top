@@ -30,7 +30,6 @@ const activeKey = computed<ModeKey>(() => {
 
 function setMode(key: ModeKey) {
   colorMode.preference = key
-  colorMode.value = key
 }
 
 const isDark = computed(() => activeKey.value === 'dark')
