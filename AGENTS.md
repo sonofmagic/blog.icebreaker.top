@@ -2,11 +2,11 @@
 
 ## Project Structure & Module Organization
 
-Icebreaker.top is a pnpm-managed monorepo targeting Node 20. Front-end apps live under `apps/`, shared libraries in `packages/`, and the Nuxt blog app sits in `blog/`. Long-form content appears in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate tests beside source files and keep automation utilities in `blog/scripts/`.
+Icebreaker.top is a pnpm-managed monorepo targeting Node 24 LTS (>=24.11.0 <25). Front-end apps live under `apps/`, shared libraries in `packages/`, and the Nuxt blog app sits in `blog/`. Long-form content appears in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate tests beside source files and keep automation utilities in `blog/scripts/`.
 
 ## Build, Test, and Development Commands
 
-Run `pnpm install` to satisfy the preinstall guard and sync workspace dependencies. Use `pnpm dev --filter @icebreakers/blog` for Nuxt development or `pnpm dev` to start all active apps. `pnpm build` produces deploy-ready bundles, `pnpm lint` runs ESLint plus Stylelint, and `pnpm test` executes the Vitest suite with coverage. Before shipping content updates, execute `pnpm script:sync` to normalize markdown and assets.
+Run `pnpm install` to satisfy the preinstall guard and sync workspace dependencies. Use `pnpm dev --filter @icebreakers/blog` for Nuxt development or `pnpm dev` to start all active apps. `pnpm build` produces deploy-ready bundles, `pnpm lint` runs ESLint, and `pnpm test` executes the Vitest suite with coverage. Initialize the article submodule and run `pnpm --filter @icebreakers/blog sync` once after cloning to link content. Run `pnpm typecheck` before shipping code updates.
 
 ## Coding Style & Naming Conventions
 
@@ -22,4 +22,4 @@ Use Conventional Commits such as `feat(blog): add hero block`. Each PR should de
 
 ## Automation & Environment
 
-Match the Node 20 target (consider Volta) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json`, `monorepo.config.ts`, and existing scripts before adding new tasks so caching and filters remain accurate. When unsure, run `git pull origin main --ff-only` before branching to sync with the automation defaults.
+Match the Node 24 LTS (>=24.11.0 <25) target (consider Volta) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json`, `repoctl.config.ts`, and existing scripts before adding new tasks so caching and filters remain accurate. When unsure, run `git pull origin master --ff-only` before branching to sync with the automation defaults.

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ReadingHistoryItem } from '@/composables/useReadingHistory'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import RecentReadingPanel from '@/components/RecentReadingPanel.vue'
@@ -65,6 +66,10 @@ const { data, pending, error } = await useAsyncData('articles:home', async () =>
     rank: total - index,
   }))
 })
+
+if (import.meta.server) {
+  prerenderRoutes((data.value ?? []).map(article => article.path))
+}
 
 const articles = computed(() => data.value || [])
 const totalArticleCount = computed(() => articles.value.length)
@@ -175,7 +180,7 @@ const recentArticles = computed(() => {
     })
     .filter(item => articleByPath.has(item.path))
 })
-const pendingRecentReadingRestore = ref<typeof recentArticles.value>([])
+const pendingRecentReadingRestore = ref<ReadingHistoryItem[]>([])
 const recentReadingStatusMessage = ref('')
 const recentReadingPanelItems = computed(() => recentReadingStatusMessage.value ? [] : recentArticles.value)
 
@@ -548,7 +553,7 @@ function scheduleRecentReadingStatusReset() {
   }, 6500)
 }
 
-function clearRecentReading(items?: typeof recentArticles.value) {
+function clearRecentReading(items?: ReadingHistoryItem[]) {
   const clearedItems = items?.length ? items : recentArticles.value
   pendingRecentReadingRestore.value = clearedItems
   recentReadingStatusMessage.value = `已清空 ${clearedItems.length} 条最近阅读记录。`
@@ -556,7 +561,7 @@ function clearRecentReading(items?: typeof recentArticles.value) {
   clearReadingHistory()
 }
 
-function restoreRecentReading(items?: typeof recentArticles.value) {
+function restoreRecentReading(items?: ReadingHistoryItem[]) {
   const restoreItems = items?.length ? items : pendingRecentReadingRestore.value
   if (!restoreItems.length) {
     return

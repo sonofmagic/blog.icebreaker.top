@@ -3,7 +3,7 @@ publish = "dist"
 command = "pnpm run build"
 
 [build.environment]
-NODE_VERSION = "22"
+NODE_VERSION = "24.21.0"
 
 [[redirects]]
 from = "/*"

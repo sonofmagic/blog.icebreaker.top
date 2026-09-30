@@ -4,8 +4,69 @@ packages:
   - blog
   - '!**/test/**'
 shamefullyHoist: true
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - esbuild
-  - sharp
-  - workerd
+gitChecks: false
+allowBuilds:
+  '@parcel/watcher': true
+  '@tailwindcss/oxide': true
+  better-sqlite3: true
+  core-js: true
+  esbuild: true
+  fsevents: true
+  msgpackr-extract: false
+  nuxt: true
+  sharp: true
+  unrs-resolver: true
+  vue-demi: true
+  vue-echarts: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - '@cloudflare/workerd-darwin-64@1.20260930.2'
+  - '@cloudflare/workerd-darwin-arm64@1.20260930.2'
+  - '@cloudflare/workerd-linux-64@1.20260930.2'
+  - '@cloudflare/workerd-linux-arm64@1.20260930.2'
+  - '@cloudflare/workerd-windows-64@1.20260930.2'
+  - '@eslint-react/ast@5.23.1'
+  - '@eslint-react/core@5.23.1'
+  - '@eslint-react/eslint-plugin@5.23.1'
+  - '@eslint-react/eslint@5.23.1'
+  - '@eslint-react/jsx@5.23.1'
+  - '@eslint-react/shared@5.23.1'
+  - '@eslint-react/var@5.23.1'
+  - '@icebreakers/eslint-config@8.0.6'
+  - '@icebreakers/monorepo-templates@2.0.7'
+  - '@icebreakers/monorepo@5.5.10'
+  - '@iconify-json/lucide@1.2.138'
+  - '@vitest/coverage-v8@5.0.3'
+  - '@vitest/mocker@5.0.3'
+  - '@vitest/spy@5.0.3'
+  - dotenv@18.0.5
+  - eslint-plugin-react-dom@5.23.1
+  - eslint-plugin-react-jsx@5.23.1
+  - eslint-plugin-react-naming-convention@5.23.1
+  - eslint-plugin-react-rsc@5.23.1
+  - eslint-plugin-react-web-api@5.23.1
+  - eslint-plugin-react-x@5.23.1
+  - miniflare@5.20260930.0-alpha
+  - vitest@5.0.3
+  - workerd@1.20260930.2
+  - wrangler@4.145.0
+# Keep the runner and its coverage provider on the same patch throughout the graph.
+overrides:
+  vitest: ~5.0.3
+  # workspace.find-packages still uses pnpm 10 internals; keep its shared services compatible.
+  '@icebreakers/monorepo>@pnpm/logger': ^1001.0.1
+  '@icebreakers/monorepo>@pnpm/worker': ^1000.6.11
+  # Security fixes for dependencies pinned by upstream development tools.
+  '@yarnpkg/shell>cross-spawn': ^7.0.6
+  '@pnpm/fetching.binary-fetcher>adm-zip': ^0.6.1
+  '@pnpm/server>uuid': ^11.1.1
+  esbuild@>=0.27.3 <0.28.1: ^0.28.2
+# Supply compatible peers locally instead of inheriting incompatible parent versions.
+packageExtensions:
+  '@bomb.sh/tab@0.0.19':
+    dependencies:
+      cac: ^6.7.14
+  unctx@3.0.1:
+    dependencies:
+      oxc-parser: ^0.151.0
+      unplugin: ^3.4.0

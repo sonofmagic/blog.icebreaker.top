@@ -103,18 +103,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'icebreaker / notes',
-      titleTemplate: (titleChunk?: string) => {
-        const siteName = 'icebreaker / notes'
-        if (!titleChunk || titleChunk === siteName) {
-          return siteName
-        }
-        return `${titleChunk} · ${siteName}`
-      },
       htmlAttrs: {
         lang: 'zh-Hans',
       },
       meta: [
-        { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1' },
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'theme-color', content: '#1f6feb' },
