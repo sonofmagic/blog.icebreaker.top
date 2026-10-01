@@ -190,6 +190,7 @@ const resumePosition = ref<null | { scrollTop: number, progress: number }>(null)
 const isResumePromptDismissed = ref(false)
 let shareResetTimer: ReturnType<typeof setTimeout> | undefined
 let savePositionTimer: ReturnType<typeof setTimeout> | undefined
+let readingFrame: number | undefined
 let previousTocActiveElement: HTMLElement | null = null
 let previousTocBodyOverflow = ''
 let shouldRestoreTocFocus = true
@@ -385,6 +386,16 @@ function syncReadingState() {
   readingProgress.value = getCurrentScrollProgress()
   hasScrolled.value = scrollTop > 480
   scheduleReadingPositionSave(scrollTop, readingProgress.value)
+}
+
+function scheduleReadingStateSync() {
+  if (readingFrame !== undefined) {
+    return
+  }
+  readingFrame = window.requestAnimationFrame(() => {
+    readingFrame = undefined
+    syncReadingState()
+  })
 }
 
 function persistReadingStateNow() {
@@ -735,9 +746,14 @@ onMounted(() => {
     setupArticleRecoveryObserver()
     setupActiveHeadingObserver()
   })
-  window.addEventListener('resize', syncReadingState)
+  window.addEventListener('scroll', scheduleReadingStateSync, { passive: true })
+  window.addEventListener('resize', scheduleReadingStateSync)
   document.addEventListener('visibilitychange', persistReadingStateNow)
   window.addEventListener('pagehide', persistReadingStateNow)
+})
+
+onBeforeRouteLeave(() => {
+  persistReadingStateNow()
 })
 
 watch(
@@ -780,7 +796,11 @@ onBeforeUnmount(() => {
   if (!import.meta.client) {
     return
   }
-  window.removeEventListener('resize', syncReadingState)
+  window.removeEventListener('scroll', scheduleReadingStateSync)
+  window.removeEventListener('resize', scheduleReadingStateSync)
+  if (readingFrame !== undefined) {
+    window.cancelAnimationFrame(readingFrame)
+  }
   document.removeEventListener('visibilitychange', persistReadingStateNow)
   window.removeEventListener('pagehide', persistReadingStateNow)
   window.removeEventListener('keydown', handleTocKeydown)
@@ -843,7 +863,7 @@ const tocUi = {
   listWithChildren: 'mt-2 space-y-1 border-l border-[var(--surface-border)]/60 pl-3',
   item: 'max-w-full overflow-hidden',
   itemWithChildren: 'max-w-full overflow-hidden',
-  link: 'group flex min-h-11 max-w-full items-start rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--panel-bg-soft)] hover:text-[var(--gh-accent-emphasis)] lg:min-h-0 lg:py-1.5',
+  link: 'group flex min-h-11 max-w-full items-start rounded-none px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--panel-bg-soft)] hover:text-[var(--gh-accent-emphasis)] lg:min-h-0 lg:py-1.5',
   linkText: 'line-clamp-2 min-w-0 break-words text-left group-focus-visible:line-clamp-none group-hover:line-clamp-none',
   activeLink: 'bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] font-medium',
   indicator: 'bg-[var(--gh-accent-subtle)]',
@@ -889,7 +909,7 @@ function handleTocMove(id?: string) {
 </script>
 
 <template>
-  <div class="relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
+  <div class="reading-layout relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-16">
     <span ref="articleTopSentinelRef" class="sr-only" aria-hidden="true" />
     <div class="article-reading-progress fixed inset-x-0 top-0 z-50 h-1 bg-transparent">
       <div
@@ -902,12 +922,12 @@ function handleTocMove(id?: string) {
       />
     </div>
 
-    <div class="flex flex-col gap-6">
+    <div class="reading-column flex min-w-0 flex-col gap-6">
       <UButton
         to="/"
         variant="ghost"
         icon="i-lucide-arrow-left"
-        class="min-h-11 w-fit rounded-full border border-transparent px-4 py-2 text-sm"
+        class="min-h-11 w-fit rounded-none border border-transparent px-4 py-2 text-sm"
         aria-label="回到文章归档"
       >
         返回归档
@@ -915,18 +935,18 @@ function handleTocMove(id?: string) {
 
       <div
         v-if="articleDetails"
-        class="article-utility-strip rounded-2xl border border-[var(--surface-border)]/50 bg-[var(--panel-bg)] px-3 py-3 shadow-[0_14px_38px_-34px_rgba(15,23,42,0.36)] sm:px-5 sm:py-4"
+        class="article-utility-strip rounded-none border border-[var(--surface-border)]/50 bg-[var(--panel-bg)] px-3 py-3 shadow-none sm:px-5 sm:py-4"
       >
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div class="article-utility-scroll flex items-center gap-2 overflow-x-auto text-xs text-muted lg:flex-wrap">
-            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--panel-bg-soft)] px-3 py-1.5">
+            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-none bg-[var(--panel-bg-soft)] px-3 py-1.5">
               <UIcon name="i-lucide-calendar-days" class="size-4 text-[var(--gh-accent-emphasis)]" />
               {{ articleDetails.date }}
             </span>
             <span
               v-for="meta in articleDetails.readingMeta"
               :key="meta"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--panel-bg-soft)] px-3 py-1.5"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-none bg-[var(--panel-bg-soft)] px-3 py-1.5"
             >
               <UIcon name="i-lucide-book-open-check" class="size-4 text-[var(--gh-accent-emphasis)]" />
               {{ meta }}
@@ -938,7 +958,7 @@ function handleTocMove(id?: string) {
               v-for="tag in articleDetails.tags"
               :key="tag"
               type="button"
-              class="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
+              class="inline-flex min-h-10 shrink-0 items-center rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
               :aria-label="`查看标签「${tag}」下的文章`"
               @click="openTag(tag)"
             >
@@ -946,7 +966,7 @@ function handleTocMove(id?: string) {
             </button>
             <button
               type="button"
-              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
+              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
               :aria-label="shareButtonLabel"
               @click="shareCurrentArticle"
             >
@@ -955,7 +975,7 @@ function handleTocMove(id?: string) {
             </button>
             <button
               type="button"
-              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
+              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
               :aria-label="copyButtonLabel"
               @click="copyCurrentUrl"
             >
@@ -964,7 +984,7 @@ function handleTocMove(id?: string) {
             </button>
             <button
               type="button"
-              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)]"
+              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)]"
               :aria-label="printButtonLabel"
               @click="printArticle"
             >
@@ -985,7 +1005,7 @@ function handleTocMove(id?: string) {
       <ClientOnly>
         <div
           v-if="shouldShowResumePrompt"
-          class="article-resume-prompt flex flex-col gap-3 rounded-2xl border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-4 py-4 text-sm text-[var(--gh-accent-emphasis)] sm:flex-row sm:items-center sm:justify-between"
+          class="article-resume-prompt flex flex-col gap-3 rounded-none border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-4 py-4 text-sm text-[var(--gh-accent-emphasis)] sm:flex-row sm:items-center sm:justify-between"
           role="status"
         >
           <div class="inline-flex items-start gap-2 leading-6">
@@ -995,14 +1015,14 @@ function handleTocMove(id?: string) {
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
               type="button"
-              class="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--gh-accent-emphasis)]/40 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)]"
+              class="inline-flex min-h-11 items-center justify-center rounded-none border border-[var(--gh-accent-emphasis)]/40 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)]"
               @click="scrollToResumePosition"
             >
               继续阅读
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)]"
+              class="inline-flex min-h-11 items-center justify-center rounded-none px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)]"
               @click="dismissResumePrompt"
             >
               稍后再说
@@ -1013,7 +1033,7 @@ function handleTocMove(id?: string) {
 
       <header
         v-if="article"
-        class="article-hero rounded-2xl border border-[var(--surface-border)]/50 bg-[var(--panel-bg)] px-5 py-6 shadow-[0_14px_38px_-34px_rgba(15,23,42,0.36)] sm:px-7 sm:py-8"
+        class="article-hero"
       >
         <p class="text-xs font-medium text-[var(--gh-accent-emphasis)]">
           文章
@@ -1035,13 +1055,13 @@ function handleTocMove(id?: string) {
 
       <div
         v-else-if="isArticleMissing"
-        class="app-card app-card-static rounded-2xl p-6 sm:p-8 lg:p-10"
+        class="app-card app-card-static rounded-none p-6 sm:p-8 lg:p-10"
         role="status"
         aria-live="polite"
       >
         <div class="flex flex-col gap-6">
           <div class="inline-flex w-fit items-center gap-2 text-xs text-muted">
-            <UBadge variant="soft" color="primary" class="rounded-lg text-xs font-medium">
+            <UBadge variant="soft" color="primary" class="rounded-none text-xs font-medium">
               未找到
             </UBadge>
             <span>404</span>
@@ -1058,7 +1078,7 @@ function handleTocMove(id?: string) {
             <UButton
               to="/"
               icon="i-lucide-archive"
-              class="min-h-11 justify-center rounded-full"
+              class="min-h-11 justify-center rounded-none"
               aria-label="回到文章归档继续浏览"
             >
               回到文章归档
@@ -1068,7 +1088,7 @@ function handleTocMove(id?: string) {
               variant="ghost"
               color="neutral"
               icon="i-lucide-search"
-              class="min-h-11 justify-center rounded-full border border-[var(--surface-border)]/70"
+              class="min-h-11 justify-center rounded-none border border-[var(--surface-border)]/70"
               aria-label="回到文章归档并聚焦搜索"
             >
               搜索其他文章
@@ -1112,7 +1132,7 @@ function handleTocMove(id?: string) {
           <ULink
             v-if="previousArticle"
             :to="previousArticle.path"
-            class="group flex min-h-32 flex-col justify-between gap-4 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)]"
+            class="group flex min-h-32 flex-col justify-between gap-4 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)]"
             :aria-label="`上一篇：${previousArticle.title}`"
           >
             <span class="inline-flex items-center gap-2 text-xs font-medium text-muted">
@@ -1127,7 +1147,7 @@ function handleTocMove(id?: string) {
           <ULink
             v-if="nextArticle"
             :to="nextArticle.path"
-            class="group flex min-h-32 flex-col justify-between gap-4 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 text-left transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)] sm:text-right"
+            class="group flex min-h-32 flex-col justify-between gap-4 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 text-left transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)] sm:text-right"
             :aria-label="`下一篇：${nextArticle.title}`"
           >
             <span class="inline-flex items-center gap-2 text-xs font-medium text-muted sm:justify-end">
@@ -1140,7 +1160,7 @@ function handleTocMove(id?: string) {
           </ULink>
         </div>
 
-        <section class="rounded-2xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-5 shadow-[0_14px_38px_-34px_rgba(15,23,42,0.38)] sm:px-5">
+        <section class="rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-5 shadow-none sm:px-5">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="space-y-1">
               <p class="text-xs font-medium text-muted">
@@ -1156,7 +1176,7 @@ function handleTocMove(id?: string) {
                 color="primary"
                 icon="i-lucide-tags"
                 size="lg"
-                class="min-h-11 justify-center rounded-full"
+                class="min-h-11 justify-center rounded-none"
                 :aria-label="primaryArticleTag ? `查看标签「${primaryArticleTag}」下的文章` : '回到文章归档'"
                 @click="openPrimaryTagOrArchive"
               >
@@ -1168,7 +1188,7 @@ function handleTocMove(id?: string) {
                 color="neutral"
                 icon="i-lucide-search"
                 size="lg"
-                class="min-h-11 justify-center rounded-full border border-[var(--surface-border)]/70"
+                class="min-h-11 justify-center rounded-none border border-[var(--surface-border)]/70"
                 aria-label="到文章归档搜索文章"
               >
                 搜索文章
@@ -1178,7 +1198,7 @@ function handleTocMove(id?: string) {
                 color="neutral"
                 icon="i-lucide-arrow-up"
                 size="lg"
-                class="min-h-11 justify-center rounded-full border border-[var(--surface-border)]/70"
+                class="min-h-11 justify-center rounded-none border border-[var(--surface-border)]/70"
                 aria-label="回到文章顶部"
                 @click="scrollToTop"
               >
@@ -1192,7 +1212,7 @@ function handleTocMove(id?: string) {
 
     <aside
       v-if="hasToc"
-      class="sticky top-32 hidden h-fit max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden rounded-2xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] p-5 shadow-[0_18px_48px_-32px_rgba(15,23,42,0.42)] lg:block"
+      class="sticky top-32 hidden h-fit max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] p-5 shadow-none lg:block"
       aria-labelledby="article-toc-title"
     >
       <div class="text-xs font-medium text-muted">
@@ -1216,7 +1236,7 @@ function handleTocMove(id?: string) {
           <span>{{ Math.round(readingProgress) }}%</span>
         </div>
         <div
-          class="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--panel-bg-soft)]"
+          class="mt-2 h-1.5 overflow-hidden rounded-none bg-[var(--panel-bg-soft)]"
           role="progressbar"
           aria-label="侧边目录文章阅读进度"
           aria-valuemin="0"
@@ -1224,7 +1244,7 @@ function handleTocMove(id?: string) {
           :aria-valuenow="Math.round(readingProgress)"
         >
           <div
-            class="h-full rounded-full bg-[var(--gh-accent-emphasis)] transition-[width] duration-150"
+            class="h-full rounded-none bg-[var(--gh-accent-emphasis)] transition-[width] duration-150"
             :style="{ width: `${readingProgress}%` }"
           />
         </div>
@@ -1235,7 +1255,7 @@ function handleTocMove(id?: string) {
       <button
         v-if="hasScrolled"
         type="button"
-        class="fixed bottom-5 right-5 z-40 hidden size-11 items-center justify-center rounded-full border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted shadow-[0_18px_45px_-26px_rgba(15,23,42,0.55)] backdrop-blur transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)] lg:inline-flex"
+        class="fixed bottom-5 right-5 z-40 hidden size-11 items-center justify-center rounded-none border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted shadow-none backdrop-blur transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)] lg:inline-flex"
         aria-label="返回文章顶部"
         @click="scrollToTop"
       >
@@ -1246,7 +1266,7 @@ function handleTocMove(id?: string) {
     <div v-if="shouldShowMobileTocButton" class="article-mobile-toc pointer-events-none lg:hidden">
       <div class="article-mobile-toc__button fixed z-40 pointer-events-auto">
         <UButton
-          class="pointer-events-auto min-h-11 min-w-11 rounded-full border border-[var(--gh-accent-emphasis)]/60 bg-[var(--gh-accent-subtle)] px-3 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)] backdrop-blur transition-colors duration-150 hover:border-[var(--gh-accent-emphasis)] hover:bg-[rgba(31,111,235,0.18)] hover:text-[var(--gh-accent-emphasis)] dark:hover:bg-[rgba(65,132,228,0.26)]"
+          class="pointer-events-auto min-h-11 min-w-11 rounded-none border border-[var(--gh-accent-emphasis)]/60 bg-[var(--gh-accent-subtle)] px-3 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] shadow-none backdrop-blur transition-colors duration-150 hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)] "
           size="sm"
           :icon="isTocOpen ? 'i-lucide-x' : 'i-lucide-list-tree'"
           :aria-label="tocButtonLabel"
@@ -1269,7 +1289,7 @@ function handleTocMove(id?: string) {
         tabindex="-1"
         @click.self="closeToc"
       >
-        <div class="article-mobile-toc__panel mx-auto w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-2xl border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] p-5 shadow-[0_22px_56px_-28px_rgba(15,23,42,0.56)] pointer-events-auto">
+        <div class="article-mobile-toc__panel mx-auto w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-none border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] p-5 shadow-none pointer-events-auto">
           <div class="mb-4 flex items-center justify-between">
             <div class="min-w-0">
               <p id="mobile-toc-title" class="text-sm font-semibold text-muted-strong">
@@ -1286,7 +1306,7 @@ function handleTocMove(id?: string) {
               variant="ghost"
               size="sm"
               icon="i-lucide-x"
-              class="size-11 rounded-full !px-0 !py-0 flex items-center justify-center text-muted"
+              class="size-11 rounded-none !px-0 !py-0 flex items-center justify-center text-muted"
               aria-label="关闭目录"
               @click="closeToc"
             />

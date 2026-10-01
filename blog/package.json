@@ -27,6 +27,7 @@
     "file-saver": "^2.0.5",
     "js-base64": "^3.9.4",
     "reading-time": "^1.5.0",
+    "three": "^0.186.1",
     "ufo": "^1.6.4",
     "uuid": "^14.0.2"
   },
@@ -47,6 +48,7 @@
     "@nuxtjs/seo": "5.3.16",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.20",
+    "@types/three": "^0.185.4",
     "@unhead/vue": "^3.4.2",
     "autoprefixer": "^10.6.1",
     "clsx": "^2.1.1",

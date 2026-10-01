@@ -258,7 +258,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .recent-reading {
   border: 1px solid var(--surface-border);
-  border-radius: 0.95rem;
+  border-radius: 0;
   background: var(--panel-bg);
   padding: 1rem;
 }
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   gap: 0.25rem;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   padding: 0.5rem 1rem;
   color: var(--muted);
@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 0.75rem;
   border: 1px solid color-mix(in srgb, var(--gh-accent-emphasis) 34%, transparent);
-  border-radius: 0.9rem;
+  border-radius: 0;
   background: var(--gh-accent-subtle);
   padding: 0.75rem 1rem;
   color: var(--gh-accent-emphasis);
@@ -347,7 +347,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--gh-accent-emphasis) 48%, transparent);
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--panel-bg);
   padding: 0.45rem 0.9rem;
   color: var(--gh-accent-emphasis);
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
   gap: 0.75rem;
   border: 1px solid transparent;
   border-top-color: color-mix(in srgb, var(--surface-border) 86%, transparent);
-  border-radius: 0.75rem;
+  border-radius: 0;
   background: transparent;
   padding: 0.75rem 1rem;
   transition:
@@ -479,7 +479,7 @@ onBeforeUnmount(() => {
 .recent-reading__tag {
   max-width: 100%;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--panel-bg);
   padding: 0.125rem 0.5rem;
   color: var(--muted);
@@ -512,14 +512,14 @@ onBeforeUnmount(() => {
   display: block;
   height: 0.18rem;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--surface-border) 55%, transparent);
 }
 
 .recent-reading__progress-bar {
   display: block;
   height: 100%;
-  border-radius: inherit;
+  border-radius: 0;
   background: var(--gh-accent-emphasis);
 }
 

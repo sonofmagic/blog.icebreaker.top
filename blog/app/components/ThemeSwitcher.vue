@@ -4,8 +4,8 @@ import { computed, onMounted, ref } from 'vue'
 const colorMode = useColorMode()
 
 const modes = [
-  { key: 'light', label: '亮色', description: 'GitHub Light Default', icon: 'i-lucide-sun' },
-  { key: 'dark', label: '柔和暗色', description: 'GitHub Dark Soft', icon: 'i-lucide-moon-star' },
+  { key: 'light', label: '亮色', description: 'Icefield Light', icon: 'i-lucide-sun' },
+  { key: 'dark', label: '柔和暗色', description: 'Icefield Dark', icon: 'i-lucide-moon-star' },
 ] as const
 
 type ModeKey = typeof modes[number]['key']
@@ -51,7 +51,7 @@ function toggleMode() {
       variant="ghost"
       color="neutral"
       size="sm"
-      class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-base sm:size-11 sm:text-lg"
+      class="size-10 rounded-none !px-0 !py-0 flex items-center justify-center text-base sm:size-11 sm:text-lg"
       :aria-label="toggleLabel"
       :aria-pressed="isDark"
       :title="`当前为${isDark ? '暗色' : '亮色'}主题，${toggleLabel}`"
@@ -63,7 +63,7 @@ function toggleMode() {
       variant="ghost"
       color="neutral"
       size="sm"
-      class="size-10 rounded-full !px-0 !py-0 flex items-center justify-center text-base sm:size-11 sm:text-lg"
+      class="size-10 rounded-none !px-0 !py-0 flex items-center justify-center text-base sm:size-11 sm:text-lg"
       aria-label="在客户端渲染后启用主题切换"
       title="主题切换"
     />

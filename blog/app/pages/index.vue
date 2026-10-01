@@ -378,13 +378,13 @@ useSiteSeo(() => ({
 }))
 
 const tagButtonBaseClass = [
-  'inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium tracking-[0.02em]',
+  'inline-flex min-h-10 max-w-full items-center gap-2 rounded-none border px-3 py-1.5 text-xs font-medium tracking-[0.02em]',
   'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gh-accent-emphasis)]/30 focus-visible:ring-offset-2',
 ].join(' ')
 
 const tagButtonActiveClass = [
-  'border-[var(--gh-accent-emphasis)] bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] shadow-[0_12px_30px_-18px_rgba(31,111,235,0.35)]',
-  'hover:border-[var(--gh-accent-emphasis)] hover:bg-[rgba(31,111,235,0.18)] hover:text-[var(--gh-accent-emphasis)] dark:hover:bg-[rgba(65,132,228,0.26)]',
+  'border-[var(--gh-accent-emphasis)] bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] shadow-none',
+  'hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)] ',
   'focus-visible:ring-offset-[var(--panel-bg)] dark:focus-visible:ring-offset-[var(--panel-bg)]',
 ].join(' ')
 
@@ -394,9 +394,9 @@ const tagButtonInactiveClass = [
   'focus-visible:ring-offset-[var(--panel-bg)]',
 ].join(' ')
 
-const tagBadgeBaseClass = 'inline-flex min-w-[1.45rem] items-center justify-center rounded-full px-2 py-0.5 text-[0.65rem] tracking-[0.04em] transition-colors duration-150'
+const tagBadgeBaseClass = 'inline-flex min-w-[1.45rem] items-center justify-center rounded-none px-2 py-0.5 text-[0.65rem] tracking-[0.04em] transition-colors duration-150'
 
-const tagBadgeActiveClass = 'bg-[rgba(31,111,235,0.18)] text-[var(--gh-accent-emphasis)] dark:bg-[rgba(65,132,228,0.24)] dark:text-[var(--gh-accent-emphasis)]'
+const tagBadgeActiveClass = 'bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)]'
 
 const tagBadgeInactiveClass = 'bg-slate-400/10 text-muted'
 
@@ -688,74 +688,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 lg:gap-8">
-    <div class="app-card app-card-static rounded-2xl p-4 sm:p-6 lg:p-8">
-      <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.48fr)] lg:items-end">
-        <div class="space-y-4">
-          <div class="inline-flex items-center gap-2 text-xs text-muted">
-            <UBadge variant="soft" color="primary" class="rounded-lg text-xs font-medium">
-              归档
-            </UBadge>
-            <span class="text-muted/80">{{ totalArticleCount }} 篇文章</span>
-          </div>
-          <div class="space-y-3">
-            <h1 class="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-[var(--gh-fg-default)] sm:text-4xl lg:text-5xl">
-              文章归档
-            </h1>
-            <p class="max-w-2xl text-sm leading-7 text-muted sm:text-base">
-              按主题和关键词快速找到技术笔记、项目复盘与日常记录。
-            </p>
-          </div>
+  <div class="home-page">
+    <HomeHero :article-count="totalArticleCount" :first-year="allYears.at(-1)?.label" />
+    <section id="archive" class="archive-section">
+      <header class="archive-heading">
+        <div>
+          <p class="section-eyebrow">
+            THE FIELD JOURNAL / 技术与日常
+          </p><h2>EXPLORING.<br><span>DOCUMENTING.</span></h2>
         </div>
-        <form
-          class="rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] p-3 shadow-[0_14px_36px_-32px_rgba(15,23,42,0.42)] transition-[border-color,box-shadow] duration-200"
-          :class="isSearchTargeted ? 'border-[var(--gh-accent-emphasis)]/70 shadow-[0_0_0_4px_rgba(31,111,235,0.14),0_18px_45px_-32px_rgba(15,23,42,0.45)] dark:shadow-[0_0_0_4px_rgba(65,132,228,0.18),0_18px_45px_-32px_rgba(15,23,42,0.45)]' : ''"
-          role="search"
-          @submit.prevent="openFirstResult"
-        >
-          <label for="article-search" class="mb-2 block text-xs font-medium text-muted">
-            搜索文章
-          </label>
-          <div class="flex min-h-11 items-center gap-2 rounded-lg border border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-3 py-1.5 transition-colors focus-within:border-[var(--gh-accent-emphasis)]/70">
-            <UIcon name="i-lucide-search" class="size-4 shrink-0 text-muted" />
-            <input
-              id="article-search"
-              ref="searchInputRef"
-              v-model="searchQuery"
-              type="search"
-              name="q"
-              aria-controls="article-results"
-              aria-describedby="archive-search-feedback"
-              class="min-h-11 min-w-0 flex-1 bg-transparent text-sm text-[var(--gh-fg-default)] outline-none placeholder:text-muted/60"
-              placeholder="标题、简介、标签"
-              autocomplete="off"
-              @keydown.enter.prevent="openFirstResult"
-            >
-            <button
-              type="submit"
-              class="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)] focus-visible:bg-[var(--gh-accent-subtle)] focus-visible:text-[var(--gh-accent-emphasis)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
-              :disabled="!firstVisibleArticle"
-              :aria-label="firstVisibleArticle ? `打开第一篇匹配文章：${firstVisibleArticle.title}` : '没有可打开的匹配文章'"
-              aria-controls="article-results"
-            >
-              <UIcon name="i-lucide-corner-down-right" class="size-4" />
-            </button>
-            <button
-              v-if="searchQuery"
-              type="button"
-              class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)] focus-visible:bg-[var(--panel-bg)] focus-visible:text-[var(--gh-accent-emphasis)] focus-visible:outline-none"
-              aria-label="清空搜索"
-              aria-controls="article-results"
-              @click="clearSearch"
-            >
-              <UIcon name="i-lucide-x" class="size-4" />
-            </button>
-          </div>
-          <p id="archive-search-feedback" class="mt-2 text-xs leading-5 text-muted">
-            {{ resultSummary }}
-          </p>
-        </form>
-      </section>
+        <div class="archive-heading__note">
+          <span class="status-dot" /> 持续记录中<p>关于前端、开源和那些值得记下的探索。<br>共 {{ totalArticleCount }} 篇笔记，慢慢翻。</p>
+        </div>
+      </header>
       <p class="sr-only" aria-live="polite">
         {{ resultSummary }}{{ firstVisibleArticle ? `，第一篇是 ${firstVisibleArticle.title}` : '' }}
       </p>
@@ -772,369 +717,344 @@ onBeforeUnmount(() => {
         />
       </ClientOnly>
 
-      <div class="mt-8 space-y-6">
-        <div
-          id="archive-controls"
-          class="scroll-mt-28 space-y-3 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-3 py-3 sm:px-4 sm:py-4"
-        >
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <span class="text-xs font-medium text-muted">按标签浏览</span>
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                v-if="hasActiveFilters"
-                type="button"
-                class="inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors duration-200 hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
-                :aria-label="copyFilterLabel"
-                @click="copyCurrentArchiveView"
+      <div class="archive-layout">
+        <aside class="archive-sidebar" aria-label="文章筛选">
+          <form
+            class="archive-search"
+            :class="{ 'archive-search--targeted': isSearchTargeted }"
+            role="search"
+            @submit.prevent="openFirstResult"
+          >
+            <label for="article-search" class="mb-2 block text-xs font-medium text-muted">
+              搜索文章
+            </label>
+            <div class="flex min-h-11 items-center gap-2 rounded-none border border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-3 py-1.5 transition-colors focus-within:border-[var(--gh-accent-emphasis)]/70">
+              <UIcon name="i-lucide-search" class="size-4 shrink-0 text-muted" />
+              <input
+                id="article-search"
+                ref="searchInputRef"
+                v-model="searchQuery"
+                type="search"
+                name="q"
+                aria-controls="article-results"
+                aria-describedby="archive-search-feedback"
+                class="min-h-11 min-w-0 flex-1 bg-transparent text-sm text-[var(--gh-fg-default)] outline-none placeholder:text-muted/60"
+                placeholder="标题、简介、标签"
+                autocomplete="off"
+                @keydown.enter.prevent="openFirstResult"
               >
-                <UIcon :name="copyFilterState === 'copied' ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
-                {{ copyFilterLabel }}
+              <button
+                type="submit"
+                class="inline-flex size-11 shrink-0 items-center justify-center rounded-none border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)] focus-visible:bg-[var(--gh-accent-subtle)] focus-visible:text-[var(--gh-accent-emphasis)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                :disabled="!firstVisibleArticle"
+                :aria-label="firstVisibleArticle ? `打开第一篇匹配文章：${firstVisibleArticle.title}` : '没有可打开的匹配文章'"
+                aria-controls="article-results"
+              >
+                <UIcon name="i-lucide-corner-down-right" class="size-4" />
               </button>
-              <span
-                v-if="copyFilterState !== 'idle'"
-                class="sr-only"
-                role="status"
-              >
-                {{ copyFilterLabel }}
-              </span>
               <button
-                v-if="hiddenTagCount > 0"
+                v-if="searchQuery"
                 type="button"
-                class="inline-flex min-h-10 items-center gap-1 rounded-full border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-muted transition-colors duration-200 hover:text-[var(--gh-accent-emphasis)]"
-                :aria-expanded="showAllTags"
-                aria-controls="tag-filter-list"
-                @click="toggleTagVisibility"
+                class="inline-flex size-11 shrink-0 items-center justify-center rounded-none text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)] focus-visible:bg-[var(--panel-bg)] focus-visible:text-[var(--gh-accent-emphasis)] focus-visible:outline-none"
+                aria-label="清空搜索"
+                aria-controls="article-results"
+                @click="clearSearch"
               >
-                {{ showAllTags ? '收起标签' : `展开更多 (${hiddenTagCount})` }}
+                <UIcon name="i-lucide-x" class="size-4" />
               </button>
             </div>
-          </div>
-
+            <p id="archive-search-feedback" class="mt-2 text-xs leading-5 text-muted">
+              {{ resultSummary }}
+            </p>
+          </form>
           <div
-            v-if="activeFilterChips.length"
-            class="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-2"
-            aria-label="当前筛选条件"
+            id="archive-controls"
+            class="archive-filters scroll-mt-28 space-y-5"
           >
-            <span class="text-xs font-medium text-muted">当前筛选</span>
-            <button
-              v-for="chip in activeFilterChips"
-              :key="chip.key"
-              type="button"
-              class="inline-flex min-h-10 max-w-full items-center gap-2 rounded-full border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[rgba(31,111,235,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gh-accent-emphasis)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--panel-bg-soft)] dark:hover:bg-[rgba(65,132,228,0.26)]"
-              :aria-label="chip.removeLabel"
-              @click="removeFilterChip(chip.key)"
-            >
-              <span class="shrink-0 text-xs text-[var(--gh-accent-emphasis)]/80">
-                {{ chip.label }}
-              </span>
-              <span class="min-w-0 truncate">{{ chip.value }}</span>
-              <UIcon name="i-lucide-x" class="size-4 shrink-0" aria-hidden="true" />
-            </button>
-          </div>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <span class="text-xs font-medium text-muted">按标签浏览</span>
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  v-if="hasActiveFilters"
+                  type="button"
+                  class="inline-flex min-h-10 items-center gap-2 rounded-none border border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors duration-200 hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
+                  :aria-label="copyFilterLabel"
+                  @click="copyCurrentArchiveView"
+                >
+                  <UIcon :name="copyFilterState === 'copied' ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
+                  {{ copyFilterLabel }}
+                </button>
+                <span
+                  v-if="copyFilterState !== 'idle'"
+                  class="sr-only"
+                  role="status"
+                >
+                  {{ copyFilterLabel }}
+                </span>
+                <button
+                  v-if="hiddenTagCount > 0"
+                  type="button"
+                  class="inline-flex min-h-10 items-center gap-1 rounded-none border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-muted transition-colors duration-200 hover:text-[var(--gh-accent-emphasis)]"
+                  :aria-expanded="showAllTags"
+                  aria-controls="tag-filter-list"
+                  @click="toggleTagVisibility"
+                >
+                  {{ showAllTags ? '收起标签' : `展开更多 (${hiddenTagCount})` }}
+                </button>
+              </div>
+            </div>
 
-          <div
-            class="filter-scroll-shell"
-            :class="{ 'filter-scroll-shell--scrollable': !showAllTags }"
-          >
             <div
-              id="tag-filter-list"
-              data-filter-group="tags"
-              class="flex gap-3 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              :class="showAllTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto pr-6'"
-              role="group"
-              aria-label="按标签筛选文章，可用左右方向键移动"
-              @keydown="handleTagGroupKeydown"
+              v-if="activeFilterChips.length"
+              class="flex flex-wrap items-center gap-2 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-2"
+              aria-label="当前筛选条件"
             >
+              <span class="text-xs font-medium text-muted">当前筛选</span>
               <button
-                :class="[tagButtonBaseClass, activeTag ? tagButtonInactiveClass : tagButtonActiveClass]"
+                v-for="chip in activeFilterChips"
+                :key="chip.key"
                 type="button"
-                :aria-pressed="!activeTag"
-                :aria-label="`显示全部标签文章，共 ${totalArticleCount} 篇`"
-                aria-controls="article-results"
-                @click="toggleTag(null)"
+                class="inline-flex min-h-10 max-w-full items-center gap-2 rounded-none border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gh-accent-emphasis)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--panel-bg-soft)] "
+                :aria-label="chip.removeLabel"
+                @click="removeFilterChip(chip.key)"
               >
-                <span class="min-w-0 truncate whitespace-nowrap">全部</span>
-                <span
-                  :class="[tagBadgeBaseClass, activeTag ? tagBadgeInactiveClass : tagBadgeActiveClass]"
-                >
-                  {{ totalArticleCount }}
+                <span class="shrink-0 text-xs text-[var(--gh-accent-emphasis)]/80">
+                  {{ chip.label }}
                 </span>
-              </button>
-
-              <button
-                v-for="tag in visibleTags"
-                :key="tag.label"
-                :class="[tagButtonBaseClass, activeTag === tag.label ? tagButtonActiveClass : tagButtonInactiveClass]"
-                type="button"
-                :aria-pressed="activeTag === tag.label"
-                :aria-label="`筛选标签「${tag.label}」，${tag.count} 篇文章`"
-                aria-controls="article-results"
-                @click="toggleTag(tag.label)"
-              >
-                <span class="min-w-0 truncate whitespace-nowrap">{{ tag.label }}</span>
-                <span
-                  :class="[tagBadgeBaseClass, activeTag === tag.label ? tagBadgeActiveClass : tagBadgeInactiveClass]"
-                >
-                  {{ tag.count }}
-                </span>
+                <span class="min-w-0 truncate">{{ chip.value }}</span>
+                <UIcon name="i-lucide-x" class="size-4 shrink-0" aria-hidden="true" />
               </button>
             </div>
-          </div>
 
-          <div
-            v-if="allYears.length"
-            class="border-t border-[var(--surface-border)]/60 pt-3"
-          >
-            <div class="mb-2 text-xs font-medium text-muted">
-              按年份浏览
-            </div>
-            <div class="filter-scroll-shell filter-scroll-shell--scrollable">
+            <div
+              class="filter-scroll-shell"
+              :class="{ 'filter-scroll-shell--scrollable': !showAllTags }"
+            >
               <div
-                id="year-filter-list"
-                data-filter-group="years"
-                class="flex gap-3 overflow-x-auto py-1 pr-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                id="tag-filter-list"
+                data-filter-group="tags"
+                class="flex gap-3 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                :class="showAllTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto pr-6'"
                 role="group"
-                aria-label="按年份筛选文章，可用左右方向键移动"
-                @keydown="handleYearGroupKeydown"
+                aria-label="按标签筛选文章，可用左右方向键移动"
+                @keydown="handleTagGroupKeydown"
               >
                 <button
-                  :class="[tagButtonBaseClass, activeYear ? tagButtonInactiveClass : tagButtonActiveClass]"
+                  :class="[tagButtonBaseClass, activeTag ? tagButtonInactiveClass : tagButtonActiveClass]"
                   type="button"
-                  :aria-pressed="!activeYear"
-                  :aria-label="`显示全部年份文章，共 ${totalArticleCount} 篇`"
+                  :aria-pressed="!activeTag"
+                  :aria-label="`显示全部标签文章，共 ${totalArticleCount} 篇`"
                   aria-controls="article-results"
-                  @click="toggleYear(null)"
+                  @click="toggleTag(null)"
                 >
-                  <span class="min-w-0 truncate whitespace-nowrap">全部年份</span>
-                  <span :class="[tagBadgeBaseClass, activeYear ? tagBadgeInactiveClass : tagBadgeActiveClass]">
+                  <span class="min-w-0 truncate whitespace-nowrap">全部</span>
+                  <span
+                    :class="[tagBadgeBaseClass, activeTag ? tagBadgeInactiveClass : tagBadgeActiveClass]"
+                  >
                     {{ totalArticleCount }}
                   </span>
                 </button>
+
                 <button
-                  v-for="year in allYears"
-                  :key="year.label"
-                  :class="[tagButtonBaseClass, activeYear === year.label ? tagButtonActiveClass : tagButtonInactiveClass]"
+                  v-for="tag in visibleTags"
+                  :key="tag.label"
+                  :class="[tagButtonBaseClass, activeTag === tag.label ? tagButtonActiveClass : tagButtonInactiveClass]"
                   type="button"
-                  :aria-pressed="activeYear === year.label"
-                  :aria-label="`筛选 ${year.label} 年文章，${year.count} 篇`"
+                  :aria-pressed="activeTag === tag.label"
+                  :aria-label="`筛选标签「${tag.label}」，${tag.count} 篇文章`"
                   aria-controls="article-results"
-                  @click="toggleYear(year.label)"
+                  @click="toggleTag(tag.label)"
                 >
-                  <span class="min-w-0 truncate whitespace-nowrap">{{ year.label }}</span>
-                  <span :class="[tagBadgeBaseClass, activeYear === year.label ? tagBadgeActiveClass : tagBadgeInactiveClass]">
-                    {{ year.count }}
+                  <span class="min-w-0 truncate whitespace-nowrap">{{ tag.label }}</span>
+                  <span
+                    :class="[tagBadgeBaseClass, activeTag === tag.label ? tagBadgeActiveClass : tagBadgeInactiveClass]"
+                  >
+                    {{ tag.count }}
                   </span>
                 </button>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div
-          v-if="pending"
-          class="app-placeholder rounded-2xl p-6 text-center text-sm sm:text-base"
-          role="status"
-          aria-live="polite"
-        >
-          正在加载，请稍候。
-        </div>
-
-        <UAlert
-          v-else-if="error"
-          color="error"
-          variant="soft"
-          icon="i-lucide-alert-triangle"
-          class="text-sm sm:text-base"
-          role="alert"
-        >
-          数据暂不可用，请稍后重试。
-        </UAlert>
-
-        <template v-else>
-          <div
-            id="archive-results-summary"
-            ref="resultsSummaryRef"
-            tabindex="-1"
-            class="flex flex-col gap-1 rounded-2xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-            aria-live="polite"
-          >
-            <p class="text-sm font-medium text-muted-strong">
-              {{ resultSummary }}
-            </p>
-            <p
-              v-if="firstVisibleArticle"
-              class="text-xs leading-5 text-muted"
-            >
-              当前第一篇：{{ firstVisibleArticle.title }}
-            </p>
-          </div>
-
-          <TransitionGroup
-            id="article-results"
-            name="card-cascade"
-            tag="div"
-            class="cards-stack"
-            role="list"
-            :aria-label="resultSummary"
-            aria-describedby="archive-results-summary"
-          >
             <div
-              v-for="(article, index) in visibleArticles"
-              :key="article.path"
-              class="cards-stack__item"
-              role="listitem"
-              :class="{ 'cards-stack__item--focused': focusedArticlePath === article.path }"
-              :data-article-index="index"
-              :data-article-path="article.path"
-              :style="{ '--stagger': `${index * 60}ms` }"
+              v-if="allYears.length"
+              class="border-t border-[var(--surface-border)]/60 pt-3"
             >
-              <ArticleCard :article="article" @select-tag="selectCardTag" />
+              <div class="mb-2 text-xs font-medium text-muted">
+                按年份浏览
+              </div>
+              <div class="filter-scroll-shell filter-scroll-shell--scrollable">
+                <div
+                  id="year-filter-list"
+                  data-filter-group="years"
+                  class="flex gap-3 overflow-x-auto py-1 pr-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  role="group"
+                  aria-label="按年份筛选文章，可用左右方向键移动"
+                  @keydown="handleYearGroupKeydown"
+                >
+                  <button
+                    :class="[tagButtonBaseClass, activeYear ? tagButtonInactiveClass : tagButtonActiveClass]"
+                    type="button"
+                    :aria-pressed="!activeYear"
+                    :aria-label="`显示全部年份文章，共 ${totalArticleCount} 篇`"
+                    aria-controls="article-results"
+                    @click="toggleYear(null)"
+                  >
+                    <span class="min-w-0 truncate whitespace-nowrap">全部年份</span>
+                    <span :class="[tagBadgeBaseClass, activeYear ? tagBadgeInactiveClass : tagBadgeActiveClass]">
+                      {{ totalArticleCount }}
+                    </span>
+                  </button>
+                  <button
+                    v-for="year in allYears"
+                    :key="year.label"
+                    :class="[tagButtonBaseClass, activeYear === year.label ? tagButtonActiveClass : tagButtonInactiveClass]"
+                    type="button"
+                    :aria-pressed="activeYear === year.label"
+                    :aria-label="`筛选 ${year.label} 年文章，${year.count} 篇`"
+                    aria-controls="article-results"
+                    @click="toggleYear(year.label)"
+                  >
+                    <span class="min-w-0 truncate whitespace-nowrap">{{ year.label }}</span>
+                    <span :class="[tagBadgeBaseClass, activeYear === year.label ? tagBadgeActiveClass : tagBadgeInactiveClass]">
+                      {{ year.count }}
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </TransitionGroup>
-
-          <div v-if="hasMoreArticles" class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-4 py-5 text-center">
-            <p class="text-sm text-muted">
-              已显示 {{ visibleArticles.length }} 篇，还有 {{ hiddenArticleCount }} 篇可继续浏览。
-            </p>
-            <button
-              type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
-              @click="loadMoreArticles"
-            >
-              加载更多
-              <UIcon name="i-lucide-chevrons-down" class="size-4" />
-            </button>
           </div>
-
+        </aside>
+        <div class="archive-results">
           <div
-            v-if="isEmpty"
-            class="app-placeholder rounded-2xl p-6 text-center text-sm sm:text-base"
+            v-if="pending"
+            class="app-placeholder rounded-none p-6 text-center text-sm sm:text-base"
             role="status"
             aria-live="polite"
           >
-            <div class="mx-auto flex max-w-md flex-col items-center gap-3">
-              <UIcon name="i-lucide-search-x" class="size-8 text-[var(--gh-accent-emphasis)]" />
-              <p class="font-medium text-muted-strong">
-                没有找到匹配的文章
+            正在加载，请稍候。
+          </div>
+
+          <UAlert
+            v-else-if="error"
+            color="error"
+            variant="soft"
+            icon="i-lucide-alert-triangle"
+            class="text-sm sm:text-base"
+            role="alert"
+          >
+            数据暂不可用，请稍后重试。
+          </UAlert>
+
+          <template v-else>
+            <div
+              id="archive-results-summary"
+              ref="resultsSummaryRef"
+              tabindex="-1"
+              class="archive-results-summary"
+              aria-live="polite"
+            >
+              <p class="text-sm font-medium text-muted-strong">
+                {{ resultSummary }}
               </p>
-              <p class="text-sm leading-6 text-muted">
-                换一个关键词，或者清空筛选后继续浏览完整归档。
+            </div>
+
+            <TransitionGroup
+              id="article-results"
+              name="card-cascade"
+              tag="div"
+              class="cards-stack"
+              role="list"
+              :aria-label="resultSummary"
+              aria-describedby="archive-results-summary"
+            >
+              <div
+                v-for="(article, index) in visibleArticles"
+                :key="article.path"
+                class="cards-stack__item"
+                role="listitem"
+                :class="{ 'cards-stack__item--focused': focusedArticlePath === article.path }"
+                :data-article-index="index"
+                :data-article-path="article.path"
+                :style="{ '--stagger': `${index * 60}ms` }"
+              >
+                <ArticleCard :article="article" @select-tag="selectCardTag" />
+              </div>
+            </TransitionGroup>
+
+            <div v-if="hasMoreArticles" class="flex flex-col items-center gap-3 rounded-none border border-dashed border-[var(--surface-border)]/70 bg-[var(--panel-bg-soft)] px-4 py-5 text-center">
+              <p class="text-sm text-muted">
+                已显示 {{ visibleArticles.length }} 篇，还有 {{ hiddenArticleCount }} 篇可继续浏览。
               </p>
               <button
-                v-if="hasActiveFilters"
                 type="button"
-                class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
-                aria-label="清空当前搜索和筛选条件"
-                @click="clearFilters"
+                class="inline-flex min-h-11 items-center gap-2 rounded-none border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
+                @click="loadMoreArticles"
               >
-                清空筛选
-                <UIcon name="i-lucide-rotate-ccw" class="size-4" />
+                加载更多
+                <UIcon name="i-lucide-chevrons-down" class="size-4" />
               </button>
             </div>
-          </div>
-        </template>
+
+            <div
+              v-if="isEmpty"
+              class="app-placeholder rounded-none p-6 text-center text-sm sm:text-base"
+              role="status"
+              aria-live="polite"
+            >
+              <div class="mx-auto flex max-w-md flex-col items-center gap-3">
+                <UIcon name="i-lucide-search-x" class="size-8 text-[var(--gh-accent-emphasis)]" />
+                <p class="font-medium text-muted-strong">
+                  没有找到匹配的文章
+                </p>
+                <p class="text-sm leading-6 text-muted">
+                  换一个关键词，或者清空筛选后继续浏览完整归档。
+                </p>
+                <button
+                  v-if="hasActiveFilters"
+                  type="button"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-none border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
+                  aria-label="清空当前搜索和筛选条件"
+                  @click="clearFilters"
+                >
+                  清空筛选
+                  <UIcon name="i-lucide-rotate-ccw" class="size-4" />
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .card-cascade-enter-active {
-  animation: card-cascade-in 0.45s cubic-bezier(0.21, 0.61, 0.35, 1) both;
-  animation-delay: var(--stagger, 0ms);
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
 }
-
-.card-cascade-leave-active {
-  animation: card-cascade-out 0.28s cubic-bezier(0.49, 0.03, 0.41, 1) both;
+.card-cascade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
 }
-
 .card-cascade-move {
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.2s;
 }
-
-@keyframes card-cascade-in {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-    filter: blur(6px);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(-4px) scale(1.02);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-@keyframes card-cascade-out {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-16px) scale(0.92);
-    filter: blur(8px);
-  }
-}
-
-.cards-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.cards-stack__item {
-  width: 100%;
-}
-
 .cards-stack__item--focused {
-  border-radius: 1.5rem;
-  outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 58%, transparent);
+  outline: 2px solid var(--gh-accent-emphasis);
   outline-offset: 4px;
 }
-
-[tabindex='-1']:focus {
-  outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 34%, transparent);
-  outline-offset: 4px;
-}
-
-.tags-scroll {
-  scrollbar-width: none;
-}
-
 .filter-scroll-shell {
-  position: relative;
   min-width: 0;
 }
-
-.filter-scroll-shell--scrollable::after {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  right: -0.25rem;
-  width: 3rem;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--panel-bg) 78%);
-  pointer-events: none;
+[tabindex='-1']:focus {
+  outline: 2px solid var(--gh-accent-emphasis);
+  outline-offset: 4px;
 }
-
-@media (min-width: 640px) {
-  .filter-scroll-shell--scrollable::after {
-    width: 4rem;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .card-cascade-enter-active,
-  .card-cascade-leave-active,
   .card-cascade-move {
-    animation: none;
     transition: none;
   }
 }

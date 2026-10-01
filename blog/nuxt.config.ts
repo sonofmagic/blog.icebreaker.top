@@ -45,7 +45,17 @@ export default defineNuxtConfig({
     },
   },
   content: {
-
+    build: {
+      markdown: {
+        highlight: {
+          theme: {
+            default: 'github-light',
+            light: 'github-light',
+            dark: 'github-dark',
+          },
+        },
+      },
+    },
   },
   ui: {
     fonts: false,
@@ -107,9 +117,9 @@ export default defineNuxtConfig({
         lang: 'zh-Hans',
       },
       meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'format-detection', content: 'telephone=no' },
-        { name: 'theme-color', content: '#1f6feb' },
+        { name: 'theme-color', content: '#090b0c' },
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },

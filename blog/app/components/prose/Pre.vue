@@ -165,9 +165,9 @@ onBeforeUnmount(() => {
   margin: 1.6rem 0;
   overflow: hidden;
   border: 1px solid var(--gh-code-border);
-  border-radius: 0.85rem;
+  border-radius: 2px;
   background: var(--gh-code-bg);
-  box-shadow: 0 14px 38px -34px rgba(15, 23, 42, 0.46);
+  box-shadow: none;
 }
 
 .prose-code-block__header {
