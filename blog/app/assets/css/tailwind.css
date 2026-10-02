@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+@import './reader.css';
 @custom-variant dark (&:where(html[data-theme='dark'] &));
 
 @font-face {
@@ -214,11 +215,6 @@ html[data-theme='dark'] {
     outline: none;
   }
 
-  .app-main--reading {
-    width: min(1240px, calc(100% - 96px));
-    margin: 4rem auto 6rem;
-  }
-
   .app-footer {
     padding: 3rem 0 1.8rem;
     margin: 0 clamp(20px, 4vw, 64px);
@@ -383,35 +379,6 @@ html[data-theme='dark'] {
     border-bottom: 1px solid var(--surface-border);
   }
 
-  .article-hero {
-    padding-block: 2rem;
-    border-top: 1px solid var(--surface-border);
-    border-bottom: 1px solid var(--surface-border);
-  }
-
-  .article-hero h1 {
-    font-size: clamp(1.8rem, 3.4vw, 3.2rem);
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-  }
-
-  .article-content {
-    width: 100%;
-    min-width: 0;
-    margin-inline: auto;
-  }
-
-  .reading-column {
-    min-width: 0;
-  }
-
-  .reading-layout aside {
-    padding-left: 1.5rem;
-    background: transparent;
-    border: 0;
-    border-left: 1px solid var(--surface-border);
-  }
-
   @media (max-width: 900px) {
     .app-header {
       min-height: 72px;
@@ -420,11 +387,6 @@ html[data-theme='dark'] {
     .archive-layout {
       grid-template-columns: 190px minmax(0, 1fr);
       gap: 2rem;
-    }
-
-    .app-main--reading {
-      width: calc(100% - 40px);
-      margin-top: 2rem;
     }
 
     .site-nav .profile-link:last-of-type {
@@ -489,299 +451,6 @@ html[data-theme='dark'] {
     .footer-bottom {
       flex-direction: column;
     }
-
-    .app-main--reading {
-      margin-bottom: 3rem;
-    }
-  }
-
-  .article-content,
-  .prose {
-    max-width: 68ch;
-    font-size: 1.02rem;
-    color: var(--gh-fg-default);
-  }
-
-  .article-content > div {
-    display: flow-root;
-  }
-
-  .article-content :where(p),
-  .article-content :where(ul),
-  .article-content :where(ol),
-  .article-content :where(blockquote),
-  .article-content :where(.prose-code-block),
-  .article-content :where(.prose-image),
-  .article-content :where(.prose-table-scroll),
-  .article-content :where(hr) {
-    margin-block: 1.35rem;
-  }
-
-  .article-content :where(ul, ol) {
-    padding-left: 1.4rem;
-  }
-
-  .article-content :where(li + li) {
-    margin-top: 0.35rem;
-  }
-
-  .article-content :where(h1) {
-    display: none;
-  }
-
-  .article-content :where(h1 + ul:has(a[href^='#'])) {
-    display: none;
-  }
-
-  .article-content :where(h1 + blockquote + ul:has(a[href^='#'])) {
-    display: none;
-  }
-
-  .prose :where(h1) {
-    font-size: 2.2rem;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-  }
-
-  .article-content :where(h2),
-  .prose :where(h2) {
-    margin-top: 2.35rem;
-    font-weight: 600;
-  }
-
-  .article-content :where(h3),
-  .prose :where(h3) {
-    margin-top: 1.85rem;
-    font-weight: 600;
-  }
-
-  .article-content :where(h4),
-  .prose :where(h4) {
-    margin-top: 1.55rem;
-    font-weight: 600;
-  }
-
-  .article-content :where(h2, h3, h4),
-  .prose :where(h2, h3, h4) {
-    max-width: 100%;
-    color: var(--gh-fg-default);
-    overflow-wrap: anywhere;
-    scroll-margin-top: 7rem;
-  }
-
-  .article-content :where(h2, h3, h4):focus,
-  .prose :where(h2, h3, h4):focus {
-    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 42%, transparent);
-    outline-offset: 0.35rem;
-    border-radius: 0.75rem;
-  }
-
-  .article-content :where(h2 a, h3 a, h4 a),
-  .prose :where(h2 a, h3 a, h4 a) {
-    display: inline-flex;
-    align-items: center;
-    max-width: 100%;
-    min-height: 2.75rem;
-    padding-inline: 0.2rem;
-    color: inherit;
-    overflow-wrap: anywhere;
-    white-space: normal;
-    text-decoration: none;
-    border-radius: 0.65rem;
-  }
-
-  .article-content
-    :where(h2 a:hover, h3 a:hover, h4 a:hover, h2 a:focus-visible, h3 a:focus-visible, h4 a:focus-visible),
-  .prose :where(h2 a:hover, h3 a:hover, h4 a:hover, h2 a:focus-visible, h3 a:focus-visible, h4 a:focus-visible) {
-    color: var(--gh-accent-emphasis);
-    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 42%, transparent);
-    outline-offset: 2px;
-  }
-
-  .article-content :where(p, li),
-  .prose :where(p, li) {
-    line-height: 1.9;
-  }
-
-  .article-content :where(p, li, blockquote, pre, table, img):focus,
-  .prose :where(p, li, blockquote, pre, table, img):focus {
-    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 34%, transparent);
-    outline-offset: 0.35rem;
-    border-radius: 0.75rem;
-  }
-
-  .article-content :where(a),
-  .prose :where(a) {
-    color: var(--gh-accent-emphasis);
-    overflow-wrap: anywhere;
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--gh-accent-emphasis) 35%, transparent 65%);
-    text-underline-offset: 0.18em;
-    transition: text-decoration-color 0.2s ease;
-  }
-
-  .article-content :where(a:hover),
-  .prose :where(a:hover) {
-    text-decoration-color: var(--gh-accent-emphasis);
-  }
-
-  .article-content :where(li > a[href^='#']),
-  .prose :where(li > a[href^='#']) {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-    padding-inline: 0.2rem;
-    text-decoration-thickness: 0.08em;
-    border-radius: 0.65rem;
-  }
-
-  .article-content :where(li > a[href^='#']:focus-visible),
-  .prose :where(li > a[href^='#']:focus-visible) {
-    outline: 2px solid color-mix(in srgb, var(--gh-accent-emphasis) 42%, transparent);
-    outline-offset: 2px;
-    background: var(--gh-accent-subtle);
-  }
-
-  .article-content :where(strong),
-  .prose :where(strong) {
-    font-weight: 650;
-    color: var(--muted-strong);
-  }
-
-  .article-content :where(blockquote),
-  .prose :where(blockquote) {
-    padding: 0.95rem 1.1rem;
-    margin-inline: 0;
-    font-style: normal;
-    color: var(--muted-strong);
-    background: color-mix(in srgb, var(--gh-accent-subtle) 24%, transparent 76%);
-    border-left: 0.2rem solid color-mix(in srgb, var(--gh-accent-emphasis) 62%, transparent);
-    border-radius: 0;
-  }
-
-  .article-content :where(blockquote p),
-  .prose :where(blockquote p) {
-    margin-block: 0.25rem;
-  }
-
-  .article-content :where(hr),
-  .prose :where(hr) {
-    margin-block: 2.5rem;
-    border: 0;
-    border-top: 1px solid var(--surface-border);
-  }
-
-  .article-content :where(:not(pre) > code),
-  .prose :where(:not(pre) > code) {
-    max-width: 100%;
-    padding: 0.08rem 0.34rem;
-    font-size: 0.92em;
-    overflow-wrap: anywhere;
-    white-space: normal;
-    background: var(--gh-code-inline-bg);
-    border: 1px solid var(--gh-code-inline-border);
-    border-radius: 0.4rem;
-  }
-
-  .article-content :where(pre),
-  .prose :where(pre) {
-    padding: 1rem;
-    overflow-x: auto;
-    background: var(--gh-code-bg);
-    border: 1px solid var(--gh-code-border);
-    border-radius: 2px;
-  }
-
-  .article-content :where(:not(pre) > code)::before,
-  .article-content :where(:not(pre) > code)::after,
-  .prose :where(:not(pre) > code)::before,
-  .prose :where(:not(pre) > code)::after {
-    content: none;
-  }
-
-  .article-content :where(.prose-table-scroll) {
-    background: var(--panel-bg);
-    border: 1px solid var(--surface-border);
-    border-radius: 2px;
-    box-shadow: 0 14px 38px -34px rgb(15 23 42 / 38%);
-  }
-
-  .article-content :where(table),
-  .prose :where(table) {
-    width: 100%;
-    min-width: max-content;
-    max-width: 100%;
-    border-spacing: 0 !important;
-    border-collapse: separate !important;
-    background: transparent;
-    border-radius: 2px;
-  }
-
-  .article-content :where(thead),
-  .prose :where(thead) {
-    background: var(--panel-bg-soft);
-  }
-
-  .article-content :where(th, td),
-  .prose :where(th, td) {
-    min-width: 8rem;
-    padding: 0.72rem 0.85rem;
-    font-size: 0.9rem;
-    line-height: 1.65;
-    vertical-align: top;
-    border-bottom: 1px solid var(--surface-border);
-  }
-
-  .article-content :where(th),
-  .prose :where(th) {
-    font-weight: 650;
-    color: var(--muted-strong);
-    text-align: left;
-    white-space: nowrap;
-  }
-
-  .article-content :where(td),
-  .prose :where(td) {
-    color: var(--gh-fg-default);
-  }
-
-  .article-content :where(tr:last-child td),
-  .prose :where(tr:last-child td) {
-    border-bottom: 0;
-  }
-
-  .article-content :where(th:not(:last-child), td:not(:last-child)),
-  .prose :where(th:not(:last-child), td:not(:last-child)) {
-    border-right: 1px solid var(--surface-border);
-  }
-
-  .article-content :where(img),
-  .prose :where(img) {
-    height: auto;
-  }
-
-  @media (max-width: 640px) {
-    .article-content,
-    .prose {
-      max-width: 100%;
-      font-size: 0.98rem;
-    }
-
-    .prose :where(h1) {
-      font-size: 1.9rem;
-    }
-
-    .article-content :where(blockquote),
-    .prose :where(blockquote) {
-      padding: 0.85rem 0.95rem;
-    }
-
-    .article-content :where(th, td),
-    .prose :where(th, td) {
-      min-width: 9.5rem;
-      padding: 0.7rem 0.8rem;
-      font-size: 0.85rem;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -823,11 +492,10 @@ html[data-theme='dark'] {
     aside,
     button,
     .article-reading-progress,
-    .article-utility-strip,
     .article-resume-prompt,
-    .article-mobile-toc,
     [data-article-recovery],
     [role='dialog'],
+    [role='menu'],
     [aria-label='返回文章顶部'] {
       display: none !important;
     }

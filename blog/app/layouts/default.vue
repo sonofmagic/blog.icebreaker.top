@@ -2,6 +2,8 @@
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 
 const route = useRoute()
+const { preferences } = useReadingPreferences()
+const isReadingFocused = computed(() => route.path.startsWith('/articles/') && preferences.value.focus)
 const currentYear = new Date().getFullYear()
 
 const navLinks = [
@@ -43,7 +45,7 @@ if (import.meta.client) {
 </script>
 
 <template>
-  <div class="app-shell antialiased">
+  <div class="app-shell antialiased" :class="{ 'app-shell--reading-focused': isReadingFocused }">
     <a href="#main-content" class="skip-link">跳到正文</a>
     <header class="app-header">
       <NuxtLink to="/" class="site-brand" aria-label="回到 icebreaker / notes 文章归档">

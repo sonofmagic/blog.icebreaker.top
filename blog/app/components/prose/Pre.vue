@@ -198,12 +198,12 @@ onBeforeUnmount(() => {
 
 .prose-code-block__copy {
   display: inline-flex;
-  min-height: 2.35rem;
+  min-height: 2.75rem;
   flex-shrink: 0;
   align-items: center;
   gap: 0.4rem;
   border: 1px solid var(--surface-border);
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--panel-bg);
   padding: 0.42rem 0.75rem;
   color: var(--muted);
@@ -251,17 +251,17 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .prose-code-block__header {
     align-items: flex-start;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding: 0.65rem 0.75rem;
   }
 
   .prose-code-block__label {
-    flex: 1 1 12rem;
+    flex: 1 1 auto;
   }
 
   .prose-code-block__copy {
-    min-height: 2.5rem;
-    min-width: 2.5rem;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
     justify-content: center;
     padding-inline: 0.65rem;
   }

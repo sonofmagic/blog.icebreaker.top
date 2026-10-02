@@ -39,3 +39,21 @@ For visual changes, check desktop, tablet and a 390px phone in both themes.
 Verify filtering and reload, empty results, load more, reading history and resume,
 TOC keyboard interaction, code copying, wide tables, print layout, reduced motion,
 WebGL fallback and repeated navigation away from and back to the homepage.
+
+## Article reader
+
+Article layout and prose are owned by `app/assets/css/reader.css`. The default
+body is 18px (rem-based), 1.85 line height, at most 720px wide. A 220px chapter
+rail appears from 1200px; smaller screens use a bottom tool strip and native
+modal dialogs. Focus mode hides the shared header, footer and chapter rail.
+
+`useReadingPreferences` shares SSR-safe defaults through Nuxt state and restores
+16/18/20px and focus preferences on mount, using the independent
+`icebreaker:reading-preferences` localStorage key. Storage failure leaves the
+controls usable for the current session. Changing the layout anchors the current
+visible block. Progress and resume both use the article body, excluding the site
+footer; the existing reading-history format is unchanged.
+
+Reader acceptance additionally covers keyboard dialog focus/escape, preference
+reload, blocked storage, layout changes mid-paragraph, no-heading articles,
+200% zoom, print and local horizontal overflow in code and tables.

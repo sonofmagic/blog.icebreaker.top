@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import type { MarkdownRoot } from '@nuxt/content'
 import type { TocLink } from '@/utils/contentBody'
+import type { ReadingPreferences } from '@/utils/reading'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import ArticleTocList from '@/components/ArticleTocList.vue'
 import RecentReadingPanel from '@/components/RecentReadingPanel.vue'
 import { buildTocLinksFromBody, extractFirstParagraphText } from '@/utils/contentBody'
+import { anchoredScrollTop, readingPositionAt, readingProgressAt, readingRange } from '@/utils/reading'
 
 const route = useRoute()
-const router = useRouter()
+const { preferences, restore: restorePreferences, update: updatePreferences } = useReadingPreferences()
+const isSettingsOpen = ref(false)
 const {
   recentItems,
   recordReading,
@@ -178,25 +180,14 @@ const tocLinks = computed<TocLink[]>(() => {
 const hasToc = computed(() => tocLinks.value.length > 0)
 const isTocOpen = ref(false)
 const articleContentRef = ref<HTMLElement | null>(null)
-const articleTopSentinelRef = ref<HTMLElement | null>(null)
-const articleRecoveryRef = ref<HTMLElement | null>(null)
-const tocDialogRef = ref<HTMLElement | null>(null)
 const readingProgress = ref(0)
 const hasScrolled = ref(false)
-const isArticleRecoveryVisible = ref(false)
 const activeHeadingId = ref<string | null>(null)
-const shareState = ref<'idle' | 'copied' | 'shared' | 'printed' | 'failed'>('idle')
 const resumePosition = ref<null | { scrollTop: number, progress: number }>(null)
 const isResumePromptDismissed = ref(false)
-let shareResetTimer: ReturnType<typeof setTimeout> | undefined
 let savePositionTimer: ReturnType<typeof setTimeout> | undefined
 let readingFrame: number | undefined
-let previousTocActiveElement: HTMLElement | null = null
-let previousTocBodyOverflow = ''
-let shouldRestoreTocFocus = true
-let articleRecoveryObserver: IntersectionObserver | undefined
-let articleTopObserver: IntersectionObserver | undefined
-let activeHeadingObserver: IntersectionObserver | undefined
+let contentResizeObserver: ResizeObserver | undefined
 const previousArticle = computed(() => adjacent.value?.prev ?? null)
 const nextArticle = computed(() => adjacent.value?.next ?? null)
 
@@ -215,21 +206,6 @@ const flatTocLinks = computed(() => {
   visit(tocLinks.value)
   return links
 })
-
-const activeHeadingLabel = computed(() => {
-  if (!activeHeadingId.value) {
-    return ''
-  }
-  return flatTocLinks.value.find(link => link.id === activeHeadingId.value)?.text ?? ''
-})
-
-const tocButtonLabel = computed(() => {
-  if (isTocOpen.value) {
-    return '收起目录'
-  }
-  return activeHeadingLabel.value ? `目录：${activeHeadingLabel.value}` : '目录'
-})
-const shouldShowMobileTocButton = computed(() => hasToc.value && (isTocOpen.value || !isArticleRecoveryVisible.value))
 
 const articleDetails = computed(() => {
   const record = article.value as Record<string, any> | null
@@ -272,7 +248,6 @@ const articleDescription = computed(() => {
   return extractFirstParagraphText(record.body) ?? ''
 })
 
-const primaryArticleTag = computed(() => articleDetails.value?.tags[0] ?? null)
 const shouldShowResumePrompt = computed(() => {
   const progress = resumePosition.value?.progress ?? 0
   return Boolean(
@@ -287,52 +262,6 @@ const shouldShowResumePrompt = computed(() => {
 const resumePromptText = computed(() => {
   const progress = resumePosition.value?.progress ?? 0
   return progress > 0 ? `上次读到 ${progress}%` : '继续上次阅读'
-})
-
-const copyButtonLabel = computed(() => {
-  if (shareState.value === 'copied') {
-    return '已复制本文链接'
-  }
-  if (shareState.value === 'failed') {
-    return '本文链接复制失败'
-  }
-  return '复制本文链接'
-})
-
-const shareButtonLabel = computed(() => {
-  if (shareState.value === 'shared') {
-    return '已打开系统分享'
-  }
-  if (shareState.value === 'copied') {
-    return '已复制本文链接'
-  }
-  if (shareState.value === 'failed') {
-    return '分享失败，已尝试复制链接'
-  }
-  return '分享本文'
-})
-
-const printButtonLabel = computed(() => {
-  if (shareState.value === 'printed') {
-    return '已打开打印'
-  }
-  return '打印本文'
-})
-
-const shareStatusLabel = computed(() => {
-  if (shareState.value === 'shared') {
-    return '已打开系统分享。'
-  }
-  if (shareState.value === 'copied') {
-    return '已复制本文链接。'
-  }
-  if (shareState.value === 'printed') {
-    return '已打开打印窗口。'
-  }
-  if (shareState.value === 'failed') {
-    return '操作失败，请稍后重试。'
-  }
-  return ''
 })
 
 function saveReadingPosition(scrollTop: number, progress: number) {
@@ -360,22 +289,22 @@ function scheduleReadingPositionSave(scrollTop: number, progress: number) {
   }, 350)
 }
 
+function currentReadingRange() {
+  const element = articleContentRef.value
+  if (!element) {
+    return { start: 0, end: 1 }
+  }
+  return readingRange(element.getBoundingClientRect().top + window.scrollY, element.scrollHeight, window.innerHeight)
+}
+
 function getCurrentScrollProgress() {
-  if (!import.meta.client) {
-    return 0
-  }
-  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0
-  const articleElement = articleContentRef.value
-  if (articleElement) {
-    const rect = articleElement.getBoundingClientRect()
-    const articleTop = rect.top + scrollTop
-    const articleHeight = articleElement.scrollHeight
-    const start = Math.max(0, articleTop - 120)
-    const end = Math.max(start + 1, articleTop + articleHeight - (window.innerHeight * 0.65))
-    return Math.min(100, Math.max(0, ((scrollTop - start) / (end - start)) * 100))
-  }
-  const scrollable = document.documentElement.scrollHeight - window.innerHeight
-  return scrollable > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollable) * 100)) : 0
+  return import.meta.client ? readingProgressAt(window.scrollY, currentReadingRange()) : 0
+}
+
+function updateActiveHeading() {
+  const headings = flatTocLinks.value.map(link => document.getElementById(link.id)).filter((element): element is HTMLElement => Boolean(element))
+  const current = headings.filter(element => element.getBoundingClientRect().top <= 160).at(-1)
+  activeHeadingId.value = current?.id ?? null
 }
 
 function syncReadingState() {
@@ -385,7 +314,27 @@ function syncReadingState() {
   const scrollTop = window.scrollY || document.documentElement.scrollTop || 0
   readingProgress.value = getCurrentScrollProgress()
   hasScrolled.value = scrollTop > 480
+  updateActiveHeading()
   scheduleReadingPositionSave(scrollTop, readingProgress.value)
+}
+
+async function changeReadingPreferences(value: ReadingPreferences) {
+  const blocks = articleContentRef.value?.querySelectorAll<HTMLElement>('h2, h3, h4, p, li, pre, table, figure')
+  const anchor = Array.from(blocks ?? []).find((element) => {
+    const rect = element.getBoundingClientRect()
+    return rect.height > 0 && rect.bottom > 100 && rect.top < window.innerHeight
+  })
+  const previousTop = anchor?.getBoundingClientRect().top
+  const scrollTop = window.scrollY
+  updatePreferences(value)
+  await nextTick()
+  if (anchor && previousTop !== undefined && scrollTop > 0) {
+    window.scrollTo({ top: anchoredScrollTop(scrollTop, previousTop, anchor.getBoundingClientRect().top), behavior: 'instant' })
+  }
+  else if (scrollTop === 0) {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
+  syncReadingState()
 }
 
 function scheduleReadingStateSync() {
@@ -406,55 +355,6 @@ function persistReadingStateNow() {
   readingProgress.value = getCurrentScrollProgress()
   hasScrolled.value = scrollTop > 480
   saveReadingPosition(scrollTop, readingProgress.value)
-}
-
-function setupActiveHeadingObserver() {
-  if (!import.meta.client) {
-    return
-  }
-
-  activeHeadingObserver?.disconnect()
-
-  if (!articleContentRef.value || tocLinks.value.length === 0) {
-    activeHeadingId.value = null
-    return
-  }
-
-  const headingIds = new Set(flatTocLinks.value.map(link => link.id))
-  const headings = Array.from(articleContentRef.value.querySelectorAll<HTMLElement>('h2[id], h3[id], h4[id]'))
-    .filter(heading => headingIds.has(heading.id))
-
-  if (headings.length === 0) {
-    activeHeadingId.value = null
-    return
-  }
-
-  activeHeadingId.value = headings[0]!.id
-  const visibleHeadings = new Map<string, number>()
-  activeHeadingObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      const id = (entry.target as HTMLElement).id
-      if (entry.isIntersecting) {
-        visibleHeadings.set(id, entry.boundingClientRect.top)
-      }
-      else {
-        visibleHeadings.delete(id)
-      }
-    }
-
-    const next = Array.from(visibleHeadings.entries())
-      .sort((a, b) => Math.abs(a[1]) - Math.abs(b[1]))[0]?.[0]
-    if (next) {
-      activeHeadingId.value = next
-    }
-  }, {
-    rootMargin: '-18% 0px -68% 0px',
-    threshold: [0, 1],
-  })
-
-  for (const heading of headings) {
-    activeHeadingObserver.observe(heading)
-  }
 }
 
 function getPreferredScrollBehavior(): ScrollBehavior {
@@ -513,158 +413,23 @@ function focusNearestReadableBlock(targetScrollTop: number) {
   }, getScrollFocusDelay())
 }
 
-function scrollToResumePosition() {
+async function scrollToResumePosition() {
   if (!import.meta.client || !resumePosition.value) {
     return
   }
-  const scrollTop = resumePosition.value.scrollTop
+  const progress = resumePosition.value.progress
+  isResumePromptDismissed.value = true
+  await nextTick()
+  const scrollTop = readingPositionAt(progress, currentReadingRange())
   window.scrollTo({
     top: scrollTop,
     behavior: getPreferredScrollBehavior(),
   })
-  isResumePromptDismissed.value = true
   focusNearestReadableBlock(scrollTop)
 }
 
 function dismissResumePrompt() {
   isResumePromptDismissed.value = true
-}
-
-function closeToc() {
-  isTocOpen.value = false
-}
-
-function getTocFocusableElements() {
-  if (!import.meta.client || !tocDialogRef.value) {
-    return []
-  }
-  return Array.from(tocDialogRef.value.querySelectorAll<HTMLElement>(
-    'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  ))
-    .filter(element => !element.hasAttribute('disabled') && element.offsetParent !== null)
-}
-
-function handleTocKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    closeToc()
-    return
-  }
-
-  if (event.key !== 'Tab' || !isTocOpen.value) {
-    return
-  }
-
-  const focusableElements = getTocFocusableElements()
-  if (focusableElements.length === 0) {
-    event.preventDefault()
-    tocDialogRef.value?.focus()
-    return
-  }
-
-  const firstElement = focusableElements[0]!
-  const lastElement = focusableElements[focusableElements.length - 1]!
-  const activeElement = document.activeElement
-
-  if (event.shiftKey && activeElement === firstElement) {
-    event.preventDefault()
-    lastElement.focus()
-  }
-  else if (!event.shiftKey && activeElement === lastElement) {
-    event.preventDefault()
-    firstElement.focus()
-  }
-}
-
-function scheduleShareStateReset() {
-  if (shareResetTimer) {
-    clearTimeout(shareResetTimer)
-  }
-  shareResetTimer = setTimeout(() => {
-    shareState.value = 'idle'
-  }, 2200)
-}
-
-async function writeCurrentUrlToClipboard() {
-  if (!import.meta.client) {
-    return false
-  }
-
-  const url = window.location.href
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(url)
-    }
-    else {
-      const textarea = document.createElement('textarea')
-      textarea.value = url
-      textarea.setAttribute('readonly', 'true')
-      textarea.style.position = 'fixed'
-      textarea.style.opacity = '0'
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-    }
-    return true
-  }
-  catch {
-    return false
-  }
-}
-
-async function copyCurrentUrl() {
-  shareState.value = await writeCurrentUrlToClipboard() ? 'copied' : 'failed'
-  scheduleShareStateReset()
-}
-
-async function shareCurrentArticle() {
-  if (!import.meta.client) {
-    return
-  }
-
-  const url = window.location.href
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: articleTitle.value,
-        text: articleDescription.value || articleTitle.value,
-        url,
-      })
-      shareState.value = 'shared'
-    }
-    else {
-      shareState.value = await writeCurrentUrlToClipboard() ? 'copied' : 'failed'
-    }
-  }
-  catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      shareState.value = 'idle'
-      return
-    }
-    shareState.value = await writeCurrentUrlToClipboard() ? 'copied' : 'failed'
-  }
-  scheduleShareStateReset()
-}
-
-function printArticle() {
-  if (!import.meta.client) {
-    return
-  }
-  shareState.value = 'printed'
-  window.print()
-  scheduleShareStateReset()
-}
-
-function openTag(tag: string) {
-  void router.push({ path: '/', query: { tag } })
-}
-
-function openPrimaryTagOrArchive() {
-  if (primaryArticleTag.value) {
-    openTag(primaryArticleTag.value)
-    return
-  }
-  void router.push('/')
 }
 
 function recordCurrentArticle() {
@@ -690,61 +455,15 @@ function recordCurrentArticle() {
   isResumePromptDismissed.value = false
 }
 
-function setupArticleRecoveryObserver() {
-  if (!import.meta.client) {
-    return
-  }
-
-  articleRecoveryObserver?.disconnect()
-
-  if (!articleRecoveryRef.value) {
-    isArticleRecoveryVisible.value = false
-    return
-  }
-
-  articleRecoveryObserver = new IntersectionObserver(
-    ([entry]) => {
-      isArticleRecoveryVisible.value = Boolean(entry?.isIntersecting)
-    },
-    {
-      rootMargin: '0px 0px -12% 0px',
-      threshold: 0.12,
-    },
-  )
-  articleRecoveryObserver.observe(articleRecoveryRef.value)
-}
-
-function setupArticleTopObserver() {
-  if (!import.meta.client) {
-    return
-  }
-
-  articleTopObserver?.disconnect()
-
-  if (!articleTopSentinelRef.value) {
-    hasScrolled.value = false
-    return
-  }
-
-  articleTopObserver = new IntersectionObserver(
-    ([entry]) => {
-      hasScrolled.value = !entry?.isIntersecting
-    },
-    {
-      rootMargin: '-512px 0px 0px 0px',
-      threshold: 0,
-    },
-  )
-  articleTopObserver.observe(articleTopSentinelRef.value)
-}
-
 onMounted(() => {
-  syncReadingState()
+  restorePreferences()
   recordCurrentArticle()
   void nextTick(() => {
-    setupArticleTopObserver()
-    setupArticleRecoveryObserver()
-    setupActiveHeadingObserver()
+    syncReadingState()
+    contentResizeObserver = new ResizeObserver(scheduleReadingStateSync)
+    if (articleContentRef.value) {
+      contentResizeObserver.observe(articleContentRef.value)
+    }
   })
   window.addEventListener('scroll', scheduleReadingStateSync, { passive: true })
   window.addEventListener('resize', scheduleReadingStateSync)
@@ -762,35 +481,10 @@ watch(
     recordCurrentArticle()
     await nextTick()
     syncReadingState()
-    setupArticleTopObserver()
-    setupArticleRecoveryObserver()
-    setupActiveHeadingObserver()
+    isTocOpen.value = false
+    isSettingsOpen.value = false
   },
 )
-
-watch(isTocOpen, async (isOpen) => {
-  if (!import.meta.client) {
-    return
-  }
-
-  if (isOpen) {
-    shouldRestoreTocFocus = true
-    previousTocActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    previousTocBodyOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleTocKeydown)
-    await nextTick()
-    tocDialogRef.value?.querySelector<HTMLElement>('[aria-label="关闭目录"]')?.focus()
-    return
-  }
-
-  document.body.style.overflow = previousTocBodyOverflow
-  window.removeEventListener('keydown', handleTocKeydown)
-  if (shouldRestoreTocFocus) {
-    previousTocActiveElement?.focus()
-  }
-  shouldRestoreTocFocus = true
-})
 
 onBeforeUnmount(() => {
   if (!import.meta.client) {
@@ -803,14 +497,7 @@ onBeforeUnmount(() => {
   }
   document.removeEventListener('visibilitychange', persistReadingStateNow)
   window.removeEventListener('pagehide', persistReadingStateNow)
-  window.removeEventListener('keydown', handleTocKeydown)
-  articleTopObserver?.disconnect()
-  articleRecoveryObserver?.disconnect()
-  activeHeadingObserver?.disconnect()
-  document.body.style.overflow = previousTocBodyOverflow
-  if (shareResetTimer) {
-    clearTimeout(shareResetTimer)
-  }
+  contentResizeObserver?.disconnect()
   if (savePositionTimer) {
     clearTimeout(savePositionTimer)
   }
@@ -855,20 +542,6 @@ const articleSeo = computed(() => {
 
 useSiteSeo(articleSeo)
 
-const tocUi = {
-  root: 'lg:w-full lg:!border-none lg:!shadow-none',
-  container: 'lg:gap-3',
-  content: 'lg:flex lg:flex-col lg:gap-1.5 lg:!overflow-visible',
-  list: 'space-y-1 text-sm text-muted leading-relaxed',
-  listWithChildren: 'mt-2 space-y-1 border-l border-[var(--surface-border)]/60 pl-3',
-  item: 'max-w-full overflow-hidden',
-  itemWithChildren: 'max-w-full overflow-hidden',
-  link: 'group flex min-h-11 max-w-full items-start rounded-none px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--panel-bg-soft)] hover:text-[var(--gh-accent-emphasis)] lg:min-h-0 lg:py-1.5',
-  linkText: 'line-clamp-2 min-w-0 break-words text-left group-focus-visible:line-clamp-none group-hover:line-clamp-none',
-  activeLink: 'bg-[var(--gh-accent-subtle)] text-[var(--gh-accent-emphasis)] font-medium',
-  indicator: 'bg-[var(--gh-accent-subtle)]',
-}
-
 function focusHeadingAfterTocMove(id?: string) {
   if (!import.meta.client) {
     return
@@ -894,165 +567,50 @@ function focusHeadingAfterTocMove(id?: string) {
   })
 }
 
-function handleTocMove(id?: string) {
-  if (isTocOpen.value) {
-    shouldRestoreTocFocus = false
-    closeToc()
-    window.setTimeout(() => {
-      focusHeadingAfterTocMove(id)
-    }, 50)
-    return
-  }
-
-  focusHeadingAfterTocMove(id)
+function handleTocMove(id: string) {
+  isTocOpen.value = false
+  void nextTick(() => focusHeadingAfterTocMove(id))
 }
 </script>
 
 <template>
-  <div class="reading-layout relative flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-16">
-    <span ref="articleTopSentinelRef" class="sr-only" aria-hidden="true" />
-    <div class="article-reading-progress fixed inset-x-0 top-0 z-50 h-1 bg-transparent">
-      <div
-        role="progressbar"
-        aria-label="顶部文章阅读进度"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        :aria-valuenow="Math.round(readingProgress)"
-        class="article-reading-progress__bar h-full bg-[var(--gh-accent-emphasis)]"
-      />
+  <div class="reading-layout" :class="{ 'reading-layout--focus': preferences.focus }" :style="{ '--reader-font-size': `${preferences.fontSize / 16}rem` }">
+    <div v-if="article" class="article-reading-progress" role="progressbar" aria-label="文章阅读进度" :aria-valuenow="Math.round(readingProgress)" :aria-valuemin="0" :aria-valuemax="100">
+      <div :style="{ transform: `scaleX(${readingProgress / 100})` }" />
     </div>
 
-    <div class="reading-column flex min-w-0 flex-col gap-6">
-      <UButton
-        to="/"
-        variant="ghost"
-        icon="i-lucide-arrow-left"
-        class="min-h-11 w-fit rounded-none border border-transparent px-4 py-2 text-sm"
-        aria-label="回到文章归档"
-      >
-        返回归档
-      </UButton>
-
-      <div
-        v-if="articleDetails"
-        class="article-utility-strip rounded-none border border-[var(--surface-border)]/50 bg-[var(--panel-bg)] px-3 py-3 shadow-none sm:px-5 sm:py-4"
-      >
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="article-utility-scroll flex items-center gap-2 overflow-x-auto text-xs text-muted lg:flex-wrap">
-            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-none bg-[var(--panel-bg-soft)] px-3 py-1.5">
-              <UIcon name="i-lucide-calendar-days" class="size-4 text-[var(--gh-accent-emphasis)]" />
-              {{ articleDetails.date }}
-            </span>
-            <span
-              v-for="meta in articleDetails.readingMeta"
-              :key="meta"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-none bg-[var(--panel-bg-soft)] px-3 py-1.5"
-            >
-              <UIcon name="i-lucide-book-open-check" class="size-4 text-[var(--gh-accent-emphasis)]" />
-              {{ meta }}
-            </span>
-          </div>
-
-          <div class="article-utility-scroll flex items-center gap-2 overflow-x-auto lg:flex-wrap lg:justify-end">
-            <button
-              v-for="tag in articleDetails.tags"
-              :key="tag"
-              type="button"
-              class="inline-flex min-h-10 shrink-0 items-center rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)]"
-              :aria-label="`查看标签「${tag}」下的文章`"
-              @click="openTag(tag)"
-            >
-              {{ tag }}
-            </button>
-            <button
-              type="button"
-              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
-              :aria-label="shareButtonLabel"
-              @click="shareCurrentArticle"
-            >
-              <UIcon :name="shareState === 'shared' ? 'i-lucide-check' : 'i-lucide-share-2'" class="size-4" />
-              {{ shareButtonLabel }}
-            </button>
-            <button
-              type="button"
-              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-[var(--gh-accent-emphasis)] transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)]"
-              :aria-label="copyButtonLabel"
-              @click="copyCurrentUrl"
-            >
-              <UIcon :name="shareState === 'copied' ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
-              {{ copyButtonLabel }}
-            </button>
-            <button
-              type="button"
-              class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg-soft)] px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)]"
-              :aria-label="printButtonLabel"
-              @click="printArticle"
-            >
-              <UIcon name="i-lucide-printer" class="size-4" />
-              {{ printButtonLabel }}
-            </button>
-            <span
-              v-if="shareState !== 'idle'"
-              class="sr-only"
-              role="status"
-            >
-              {{ shareStatusLabel }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <ClientOnly>
-        <div
-          v-if="shouldShowResumePrompt"
-          class="article-resume-prompt flex flex-col gap-3 rounded-none border border-[var(--gh-accent-emphasis)]/30 bg-[var(--gh-accent-subtle)] px-4 py-4 text-sm text-[var(--gh-accent-emphasis)] sm:flex-row sm:items-center sm:justify-between"
-          role="status"
-        >
-          <div class="inline-flex items-start gap-2 leading-6">
-            <UIcon name="i-lucide-book-marked" class="mt-0.5 size-4 shrink-0" />
-            <span>{{ resumePromptText }}，可以从上次离开的地方继续。</span>
-          </div>
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              class="inline-flex min-h-11 items-center justify-center rounded-none border border-[var(--gh-accent-emphasis)]/40 bg-[var(--panel-bg)] px-4 py-2 text-sm font-medium transition-colors hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)]"
-              @click="scrollToResumePosition"
-            >
-              继续阅读
-            </button>
-            <button
-              type="button"
-              class="inline-flex min-h-11 items-center justify-center rounded-none px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-[var(--panel-bg)] hover:text-[var(--gh-accent-emphasis)]"
-              @click="dismissResumePrompt"
-            >
-              稍后再说
-            </button>
-          </div>
-        </div>
-      </ClientOnly>
-
-      <header
-        v-if="article"
-        class="article-hero"
-      >
-        <p class="text-xs font-medium text-[var(--gh-accent-emphasis)]">
-          文章
-        </p>
-        <h1 class="mt-3 text-3xl font-semibold leading-tight tracking-tight text-[var(--gh-fg-default)] sm:text-4xl lg:text-5xl">
-          {{ articleTitle }}
-        </h1>
-        <p
-          v-if="articleDescription"
-          class="mt-4 max-w-2xl text-sm leading-7 text-muted sm:text-base"
-        >
+    <div class="reading-column">
+      <NuxtLink to="/#archive" class="reader-back">
+        <UIcon name="i-lucide-arrow-left" class="size-4" />返回归档
+      </NuxtLink>
+      <header v-if="article" class="article-hero">
+        <h1>{{ articleTitle }}</h1>
+        <p v-if="articleDescription" class="article-description">
           {{ articleDescription }}
         </p>
+        <div class="article-meta">
+          <div class="article-meta__details">
+            <time :datetime="articleDetails?.date">{{ articleDetails?.date }}</time>
+            <span v-for="meta in articleDetails?.readingMeta" :key="meta">{{ meta }}</span>
+          </div>
+          <ArticleActions :title="articleTitle" :description="articleDescription" />
+        </div>
+        <ClientOnly>
+          <div v-if="shouldShowResumePrompt" class="article-resume-prompt">
+            <span>{{ resumePromptText }}</span>
+            <button type="button" class="reader-button" @click="scrollToResumePosition">
+              继续阅读 <span aria-hidden="true">↗</span>
+            </button>
+            <button type="button" class="reader-button" aria-label="忽略上次阅读位置" @click="dismissResumePrompt">
+              <UIcon name="i-lucide-x" class="size-4" />
+            </button>
+          </div>
+        </ClientOnly>
       </header>
 
       <div v-if="article" ref="articleContentRef" class="article-content">
         <ContentRenderer :value="article" />
       </div>
-
       <div
         v-else-if="isArticleMissing"
         class="app-card app-card-static rounded-none p-6 sm:p-8 lg:p-10"
@@ -1107,256 +665,62 @@ function handleTocMove(id?: string) {
         </div>
       </div>
 
-      <UAlert
-        v-else
-        color="primary"
-        variant="soft"
-        icon="i-lucide-loader-2"
-        class="animate-pulse text-sm sm:text-base"
-        role="status"
-        aria-live="polite"
-      >
-        正在加载文章…
-      </UAlert>
-
-      <div
-        v-if="article"
-        ref="articleRecoveryRef"
-        class="mt-10 space-y-5 border-t border-[var(--surface-border)]/60 pt-6"
-        data-article-recovery
-      >
-        <div
-          v-if="previousArticle || nextArticle"
-          class="grid gap-4 sm:grid-cols-2"
-        >
-          <ULink
-            v-if="previousArticle"
-            :to="previousArticle.path"
-            class="group flex min-h-32 flex-col justify-between gap-4 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)]"
-            :aria-label="`上一篇：${previousArticle.title}`"
-          >
-            <span class="inline-flex items-center gap-2 text-xs font-medium text-muted">
-              <UIcon name="i-lucide-arrow-left" class="size-4" />
-              上一篇
-            </span>
-            <span class="text-sm font-semibold leading-snug text-[var(--gh-fg-default)] group-hover:text-[var(--gh-accent-emphasis)]">
-              {{ previousArticle.title }}
-            </span>
-          </ULink>
-
-          <ULink
-            v-if="nextArticle"
-            :to="nextArticle.path"
-            class="group flex min-h-32 flex-col justify-between gap-4 rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-4 text-left transition-colors hover:border-[var(--gh-accent-emphasis)]/60 hover:bg-[var(--panel-bg-soft)] sm:text-right"
-            :aria-label="`下一篇：${nextArticle.title}`"
-          >
-            <span class="inline-flex items-center gap-2 text-xs font-medium text-muted sm:justify-end">
-              下一篇
-              <UIcon name="i-lucide-arrow-right" class="size-4" />
-            </span>
-            <span class="text-sm font-semibold leading-snug text-[var(--gh-fg-default)] group-hover:text-[var(--gh-accent-emphasis)]">
-              {{ nextArticle.title }}
-            </span>
-          </ULink>
+      <footer v-if="article" class="reader-ending" data-article-recovery>
+        <div class="reader-tags" aria-label="文章标签">
+          <NuxtLink v-for="tag in articleDetails?.tags" :key="tag" :to="{ path: '/', query: { tag }, hash: '#archive' }">
+            # {{ tag }}
+          </NuxtLink>
         </div>
-
-        <section class="rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] px-4 py-5 shadow-none sm:px-5">
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div class="space-y-1">
-              <p class="text-xs font-medium text-muted">
-                继续阅读
-              </p>
-              <h2 class="text-base font-semibold text-[var(--gh-fg-default)]">
-                继续浏览相关笔记
-              </h2>
-            </div>
-            <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <UButton
-                variant="soft"
-                color="primary"
-                icon="i-lucide-tags"
-                size="lg"
-                class="min-h-11 justify-center rounded-none"
-                :aria-label="primaryArticleTag ? `查看标签「${primaryArticleTag}」下的文章` : '回到文章归档'"
-                @click="openPrimaryTagOrArchive"
-              >
-                {{ primaryArticleTag ? `查看 ${primaryArticleTag}` : '回到归档' }}
-              </UButton>
-              <UButton
-                to="/#article-search"
-                variant="ghost"
-                color="neutral"
-                icon="i-lucide-search"
-                size="lg"
-                class="min-h-11 justify-center rounded-none border border-[var(--surface-border)]/70"
-                aria-label="到文章归档搜索文章"
-              >
-                搜索文章
-              </UButton>
-              <UButton
-                variant="ghost"
-                color="neutral"
-                icon="i-lucide-arrow-up"
-                size="lg"
-                class="min-h-11 justify-center rounded-none border border-[var(--surface-border)]/70"
-                aria-label="回到文章顶部"
-                @click="scrollToTop"
-              >
-                回到顶部
-              </UButton>
-            </div>
-          </div>
-        </section>
-      </div>
+        <nav v-if="previousArticle || nextArticle" class="reader-adjacent" aria-label="相邻文章">
+          <NuxtLink v-if="previousArticle" :to="previousArticle.path" :aria-label="`上一篇：${previousArticle.title}`">
+            <span>← 上一篇</span><strong>{{ previousArticle.title }}</strong>
+          </NuxtLink>
+          <NuxtLink v-if="nextArticle" :to="nextArticle.path" :aria-label="`下一篇：${nextArticle.title}`">
+            <span>下一篇 →</span><strong>{{ nextArticle.title }}</strong>
+          </NuxtLink>
+        </nav>
+        <div class="reader-ending__links">
+          <NuxtLink to="/#archive">
+            全部文章 ↗
+          </NuxtLink><button type="button" class="reader-button" @click="scrollToTop">
+            回到顶部 ↑
+          </button>
+        </div>
+      </footer>
     </div>
 
-    <aside
-      v-if="hasToc"
-      class="sticky top-32 hidden h-fit max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden rounded-none border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] p-5 shadow-none lg:block"
-      aria-labelledby="article-toc-title"
-    >
-      <div class="text-xs font-medium text-muted">
-        目录
-      </div>
-      <h2 id="article-toc-title" class="mt-2 text-sm font-semibold tracking-wide text-muted-strong">
-        文章目录
-      </h2>
-      <p
-        v-if="activeHeadingLabel"
-        class="mt-2 line-clamp-2 text-xs leading-5 text-[var(--gh-accent-emphasis)]"
-      >
-        正在阅读：{{ activeHeadingLabel }}
-      </p>
-      <div class="mt-4 -mr-2 pr-2">
-        <ArticleTocList :links="tocLinks" :toc-ui="tocUi" :active-id="activeHeadingId" @move="handleTocMove" />
-      </div>
-      <div class="mt-5 border-t border-[var(--surface-border)]/60 pt-4">
-        <div class="flex items-center justify-between text-xs text-muted">
-          <span>阅读进度</span>
-          <span>{{ Math.round(readingProgress) }}%</span>
-        </div>
-        <div
-          class="mt-2 h-1.5 overflow-hidden rounded-none bg-[var(--panel-bg-soft)]"
-          role="progressbar"
-          aria-label="侧边目录文章阅读进度"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          :aria-valuenow="Math.round(readingProgress)"
-        >
-          <div
-            class="h-full rounded-none bg-[var(--gh-accent-emphasis)] transition-[width] duration-150"
-            :style="{ width: `${readingProgress}%` }"
-          />
-        </div>
+    <aside v-if="article" class="reader-sidebar">
+      <div class="reader-sidebar__sticky">
+        <template v-if="hasToc">
+          <p class="reader-sidebar__label">
+            本文目录
+          </p>
+          <ArticleOutline :links="tocLinks" :active-id="activeHeadingId" @move="handleTocMove" />
+        </template>
+        <button type="button" class="reader-button reader-settings-trigger" aria-haspopup="dialog" @click="isSettingsOpen = true">
+          <span class="reader-aa" aria-hidden="true">Aa</span>阅读设置
+        </button>
+        <button v-if="hasScrolled" type="button" class="reader-button" @click="scrollToTop">
+          回到顶部 ↑
+        </button>
       </div>
     </aside>
 
-    <ClientOnly>
-      <button
-        v-if="hasScrolled"
-        type="button"
-        class="fixed bottom-5 right-5 z-40 hidden size-11 items-center justify-center rounded-none border border-[var(--surface-border)]/70 bg-[var(--panel-bg)] text-muted shadow-none backdrop-blur transition-colors hover:border-[var(--gh-accent-emphasis)]/70 hover:text-[var(--gh-accent-emphasis)] lg:inline-flex"
-        aria-label="返回文章顶部"
-        @click="scrollToTop"
-      >
-        <UIcon name="i-lucide-arrow-up" class="size-5" />
+    <div v-if="article" class="reader-dock" :class="{ 'reader-dock--focus': preferences.focus }" role="group" aria-label="阅读工具">
+      <button v-if="preferences.focus" type="button" class="reader-button" @click="changeReadingPreferences({ ...preferences, focus: false })">
+        退出专注
       </button>
-    </ClientOnly>
-
-    <div v-if="shouldShowMobileTocButton" class="article-mobile-toc pointer-events-none lg:hidden">
-      <div class="article-mobile-toc__button fixed z-40 pointer-events-auto">
-        <UButton
-          class="pointer-events-auto min-h-11 min-w-11 rounded-none border border-[var(--gh-accent-emphasis)]/60 bg-[var(--gh-accent-subtle)] px-3 py-2 text-sm font-medium text-[var(--gh-accent-emphasis)] shadow-none backdrop-blur transition-colors duration-150 hover:border-[var(--gh-accent-emphasis)] hover:bg-[var(--gh-accent-subtle)] hover:text-[var(--gh-accent-emphasis)] "
-          size="sm"
-          :icon="isTocOpen ? 'i-lucide-x' : 'i-lucide-list-tree'"
-          :aria-label="tocButtonLabel"
-          :aria-expanded="isTocOpen"
-          aria-controls="mobile-article-toc"
-          @click="isTocOpen = !isTocOpen"
-        >
-          <span class="sr-only">{{ isTocOpen ? '收起目录' : '目录' }}</span>
-        </UButton>
-      </div>
-
-      <div
-        v-if="isTocOpen"
-        id="mobile-article-toc"
-        ref="tocDialogRef"
-        class="fixed inset-0 z-30 flex flex-col justify-end bg-black/60 backdrop-blur-sm pointer-events-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mobile-toc-title"
-        tabindex="-1"
-        @click.self="closeToc"
-      >
-        <div class="article-mobile-toc__panel mx-auto w-[min(100%-2.5rem,28rem)] max-h-[70vh] overflow-y-auto rounded-none border border-[var(--surface-border)]/80 bg-[var(--panel-bg)] p-5 shadow-none pointer-events-auto">
-          <div class="mb-4 flex items-center justify-between">
-            <div class="min-w-0">
-              <p id="mobile-toc-title" class="text-sm font-semibold text-muted-strong">
-                文章目录
-              </p>
-              <p
-                v-if="activeHeadingLabel"
-                class="mt-1 line-clamp-2 text-xs leading-5 text-[var(--gh-accent-emphasis)]"
-              >
-                正在阅读：{{ activeHeadingLabel }}
-              </p>
-            </div>
-            <UButton
-              variant="ghost"
-              size="sm"
-              icon="i-lucide-x"
-              class="size-11 rounded-none !px-0 !py-0 flex items-center justify-center text-muted"
-              aria-label="关闭目录"
-              @click="closeToc"
-            />
-          </div>
-          <div>
-            <ArticleTocList :links="tocLinks" :toc-ui="tocUi" :active-id="activeHeadingId" @move="handleTocMove" />
-          </div>
-        </div>
-      </div>
+      <button v-if="hasToc" type="button" class="reader-button" aria-haspopup="dialog" :aria-expanded="isTocOpen" @click="isTocOpen = true">
+        <UIcon name="i-lucide-list-tree" class="size-4" />目录
+      </button>
+      <button type="button" class="reader-button" aria-haspopup="dialog" :aria-expanded="isSettingsOpen" @click="isSettingsOpen = true">
+        <span class="reader-aa" aria-hidden="true">Aa</span>阅读设置
+      </button>
+      <ThemeSwitcher />
     </div>
+    <ReaderDialog v-model="isTocOpen" title="文章目录">
+      <ArticleOutline :links="tocLinks" :active-id="activeHeadingId" @move="handleTocMove" />
+    </ReaderDialog>
+    <ArticleReadingSettings v-model="isSettingsOpen" :preferences="preferences" @change="changeReadingPreferences" />
   </div>
 </template>
-
-<style scoped>
-.article-reading-progress__bar {
-  transform-origin: left center;
-  transform: scaleX(0);
-}
-
-@supports (animation-timeline: scroll()) {
-  .article-reading-progress__bar {
-    animation: article-progress linear both;
-    animation-timeline: scroll(root block);
-  }
-}
-
-@keyframes article-progress {
-  from {
-    transform: scaleX(0);
-  }
-
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.article-mobile-toc__button {
-  bottom: max(1.25rem, env(safe-area-inset-bottom));
-  right: max(1rem, env(safe-area-inset-right));
-}
-
-.article-mobile-toc__panel {
-  margin-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem));
-}
-
-.article-utility-scroll {
-  scrollbar-width: none;
-}
-
-.article-utility-scroll::-webkit-scrollbar {
-  display: none;
-}
-</style>

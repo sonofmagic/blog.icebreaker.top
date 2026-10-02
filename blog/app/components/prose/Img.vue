@@ -23,7 +23,7 @@ const refinedSrc = computed(() => {
   return props.src
 })
 
-const baseClass = computed(() => props.ui?.base || 'max-w-full rounded-xl border border-[var(--surface-border)]/60 bg-[var(--panel-bg)] shadow-[0_14px_38px_-32px_rgba(15,23,42,0.38)]')
+const baseClass = computed(() => props.ui?.base || 'max-w-full rounded-sm border border-[var(--surface-border)]/60 bg-[var(--panel-bg)]')
 const isPreviewOpen = ref(false)
 const dialogRef = ref<HTMLElement | null>(null)
 const previewStageRef = ref<HTMLElement | null>(null)
@@ -260,7 +260,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 0.85rem;
+  border-radius: 2px;
   background: transparent;
   padding: 0;
   color: inherit;

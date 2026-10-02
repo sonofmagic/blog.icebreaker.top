@@ -50,7 +50,12 @@ function persistHistory() {
   if (!import.meta.client) {
     return
   }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
+  }
+  catch {
+    // Keep reading history available for this session when storage is blocked.
+  }
 }
 
 function loadHistory() {
@@ -138,7 +143,12 @@ function getReadingPosition(path: string) {
 function clearReadingHistory() {
   items.value = []
   if (import.meta.client) {
-    window.localStorage.removeItem(STORAGE_KEY)
+    try {
+      window.localStorage.removeItem(STORAGE_KEY)
+    }
+    catch {
+      // The in-memory history has already been cleared.
+    }
   }
 }
 
@@ -159,7 +169,12 @@ function restoreReadingHistory(historyItems: readonly ReadingHistoryItem[]) {
     persistHistory()
   }
   else {
-    window.localStorage.removeItem(STORAGE_KEY)
+    try {
+      window.localStorage.removeItem(STORAGE_KEY)
+    }
+    catch {
+      // The in-memory history has already been cleared.
+    }
   }
 }
 

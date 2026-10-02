@@ -135,4 +135,20 @@ describe('useReadingHistory', () => {
     expect(history.items.value).toEqual([])
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
   })
+
+  it('keeps session history usable when local storage writes fail', async () => {
+    const { useReadingHistory } = await loadReadingHistory()
+    const history = useReadingHistory()
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('Storage full')
+    })
+    vi.spyOn(localStorage, 'removeItem').mockImplementation(() => {
+      throw new Error('Storage denied')
+    })
+    expect(() => history.recordReading({ path: '/articles/offline', title: '离线阅读', tags: [] })).not.toThrow()
+    history.updateReadingPosition('/articles/offline', 500, 40)
+    expect(history.getReadingPosition('/articles/offline')).toEqual({ scrollTop: 500, progress: 40 })
+    expect(() => history.clearReadingHistory()).not.toThrow()
+    expect(history.items.value).toEqual([])
+  })
 })
