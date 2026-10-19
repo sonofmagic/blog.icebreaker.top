@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Icebreaker.top is a Node 24 LTS (>=24.11.0 <25) pnpm monorepo. Front-end apps live under `apps/`, shared logic in `packages/`, and the Nuxt blog app sits here in `blog/`. Long-form articles reside in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate specs beside code and keep automation helpers within `blog/scripts/`. Store temporary scratch work elsewhere to keep the tree predictable.
+Icebreaker.top is a Node 24 LTS (>=24.15.0 <25) pnpm monorepo. Front-end apps live under `apps/`, shared logic in `packages/`, and the Nuxt blog app sits here in `blog/`. Long-form articles reside in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate specs beside code and keep automation helpers within `blog/scripts/`. Store temporary scratch work elsewhere to keep the tree predictable.
 
 ## Build, Test, and Development Commands
 
@@ -22,4 +22,4 @@ Follow Conventional Commits, such as `feat(blog): add hero block`. PRs should su
 
 ## Automation & Environment
 
-Match the Node 24 LTS (>=24.11.0 <25) runtime (Volta recommended) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json` and `repoctl.config.ts` before introducing new tasks so caching and filters stay accurate. Run `git pull origin master --ff-only` before branching to align with automation defaults.
+Match the Node 24 LTS (>=24.15.0 <25) runtime (Volta recommended) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json` and `repoctl.config.ts` before introducing new tasks so caching and filters stay accurate. Run `git pull origin master --ff-only` before branching to align with automation defaults.

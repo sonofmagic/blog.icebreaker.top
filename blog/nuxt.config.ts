@@ -117,7 +117,6 @@ export default defineNuxtConfig({
         lang: 'zh-Hans',
       },
       meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'format-detection', content: 'telephone=no' },
         { name: 'theme-color', content: '#090b0c' },
       ],

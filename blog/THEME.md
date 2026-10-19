@@ -6,7 +6,7 @@ scripts are embedded.
 
 ## Development
 
-Use Node 24 LTS (>=24.11.0 <25) and pnpm. If `blog/content` is missing, run
+Use Node 24 LTS (>=24.15.0 <25) and pnpm. If `blog/content` is missing, run
 `pnpm --filter @icebreakers/blog sync` once to link the existing article source.
 Start the preview with `pnpm --filter @icebreakers/blog dev`; the default port is 9000. Native SQLite dependencies must be compiled with the same Node version.
 

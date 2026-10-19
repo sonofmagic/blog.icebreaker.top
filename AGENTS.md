@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Icebreaker.top is a pnpm-managed monorepo targeting Node 24 LTS (>=24.11.0 <25). Front-end apps live under `apps/`, shared libraries in `packages/`, and the Nuxt blog app sits in `blog/`. Long-form content appears in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate tests beside source files and keep automation utilities in `blog/scripts/`.
+Icebreaker.top is a pnpm-managed monorepo targeting Node 24 LTS (>=24.15.0 <25). Front-end apps live under `apps/`, shared libraries in `packages/`, and the Nuxt blog app sits in `blog/`. Long-form content appears in `article/content/` with helpers in `article/scripts/` and `article/actions/`. Co-locate tests beside source files and keep automation utilities in `blog/scripts/`.
 
 ## Build, Test, and Development Commands
 
@@ -22,4 +22,4 @@ Use Conventional Commits such as `feat(blog): add hero block`. Each PR should de
 
 ## Automation & Environment
 
-Match the Node 24 LTS (>=24.11.0 <25) target (consider Volta) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json`, `repoctl.config.ts`, and existing scripts before adding new tasks so caching and filters remain accurate. When unsure, run `git pull origin master --ff-only` before branching to sync with the automation defaults.
+Match the Node 24 LTS (>=24.15.0 <25) target (consider Volta) and respect Husky hooks—they enforce linting and guardrails. Review `turbo.json`, `repoctl.config.ts`, and existing scripts before adding new tasks so caching and filters remain accurate. When unsure, run `git pull origin master --ff-only` before branching to sync with the automation defaults.

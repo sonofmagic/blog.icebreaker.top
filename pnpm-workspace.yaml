@@ -32,14 +32,14 @@ minimumReleaseAgeExclude:
   - '@eslint-react/jsx@5.23.1'
   - '@eslint-react/shared@5.23.1'
   - '@eslint-react/var@5.23.1'
-  - '@icebreakers/eslint-config@8.0.6'
+  - '@icebreakers/eslint-config@8.0.9'
   - '@icebreakers/monorepo-templates@2.0.7'
-  - '@icebreakers/monorepo@5.5.10'
-  - '@iconify-json/lucide@1.2.138'
-  - '@vitest/coverage-v8@5.0.3'
-  - '@vitest/mocker@5.0.3'
-  - '@vitest/spy@5.0.3'
-  - dotenv@18.0.5
+  - '@icebreakers/monorepo@5.10.3'
+  - '@iconify-json/lucide@1.2.145'
+  - '@vitest/coverage-v8@5.0.5'
+  - '@vitest/mocker@5.0.5'
+  - '@vitest/spy@5.0.5'
+  - dotenv@18.0.8
   - eslint-plugin-react-dom@5.23.1
   - eslint-plugin-react-jsx@5.23.1
   - eslint-plugin-react-naming-convention@5.23.1
@@ -47,12 +47,12 @@ minimumReleaseAgeExclude:
   - eslint-plugin-react-web-api@5.23.1
   - eslint-plugin-react-x@5.23.1
   - miniflare@5.20260930.0-alpha
-  - vitest@5.0.3
+  - vitest@5.0.5
   - workerd@1.20260930.2
-  - wrangler@4.145.0
+  - wrangler@4.151.1
 # Keep the runner and its coverage provider on the same patch throughout the graph.
 overrides:
-  vitest: ~5.0.3
+  vitest: ~5.0.5
   # workspace.find-packages still uses pnpm 10 internals; keep its shared services compatible.
   '@icebreakers/monorepo>@pnpm/logger': ^1001.0.1
   '@icebreakers/monorepo>@pnpm/worker': ^1000.6.11
@@ -61,6 +61,7 @@ overrides:
   '@pnpm/fetching.binary-fetcher>adm-zip': ^0.6.1
   '@pnpm/server>uuid': ^11.1.1
   esbuild@>=0.27.3 <0.28.1: ^0.28.2
+  tinypool: ^2.1.2
 # Supply compatible peers locally instead of inheriting incompatible parent versions.
 packageExtensions:
   '@bomb.sh/tab@0.0.19':

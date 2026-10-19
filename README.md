@@ -14,7 +14,7 @@
 
 ## 开发与验证
 
-使用 Node.js 24 LTS（最低 24.11.0；`.node-version` / `.nvmrc` 固定为 24.21.0）和 `package.json` 指定的 pnpm 版本。
+使用 Node.js 24 LTS（最低 24.15.0；`.node-version` / `.nvmrc` 固定为 24.21.0）和 `package.json` 指定的 pnpm 版本。
 
 ```sh
 corepack enable
