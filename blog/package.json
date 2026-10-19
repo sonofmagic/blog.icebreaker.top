@@ -10,6 +10,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "predev": "pnpm sync",
     "generate": "nuxt generate",
     "lint": "eslint .",
     "preview": "nuxt preview",
